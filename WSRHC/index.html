@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WSRHC – Waste Dump and Stockpile Stability Rating and Hazard Classification</title>
+<style>
+:root{
+  --ink:#1d2733; --muted:#5b6876; --line:#d9e0e7; --bg:#f5f7fa; --card:#fff;
+  --accent:#1f4e79; --accent2:#2f6ea8; --blue:#1a5fb4;
+  --c0:#f1b5bb; --c1:#f8cfa1; --c2:#e4e98c; --c3:#c6e4aa; --c4:#ace0e8;
+  --d0:#b23a48; --d1:#c46a12; --d2:#8a8f00; --d3:#3f8a2a; --d4:#13808f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header.top{background:#fff;border-bottom:1px solid var(--line)}
+header.top .wrap{padding-top:18px;padding-bottom:14px}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.brand h1{margin:0;font-size:32px;letter-spacing:2px;color:var(--accent);font-weight:700}
+.brand .sub{font-size:16px;color:var(--muted)}
+.cite{margin-top:6px;font-size:13px;color:var(--muted)}
+.cite b{font-weight:600;color:var(--ink)}
+.module{margin-top:2px;font-size:13px;color:var(--blue);font-weight:400}
+nav.tabs{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 2px 6px rgba(20,40,60,.04)}
+nav.tabs .wrap{max-width:1320px;display:flex;align-items:center;gap:2px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+.tab{flex:0 0 auto;border:0;background:transparent;padding:6px 8px;border-radius:8px;cursor:pointer;font:inherit;font-size:13.5px;color:var(--muted);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.tab:hover{background:#eef3f8;color:var(--ink)}
+.tab.active{background:var(--accent);color:#fff}
+.tab .num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:12px;background:#e3e9ef;color:var(--ink)}
+.tab.active .num{background:#fff;color:var(--accent)}
+.tab .prog{font-size:11px;opacity:.85}
+.tab .prog.done{color:var(--d3);font-weight:600}
+.tab.active .prog.done{color:#c9f2b5}
+.chip{margin-left:auto;flex:0 0 auto;font-size:13px;padding:5px 10px;border-radius:999px;background:#eef3f8;color:var(--ink);white-space:nowrap;cursor:pointer;border:1px solid var(--line)}
+.chip b{font-weight:700}
+main .wrap{padding-top:22px;padding-bottom:40px}
+.panel{display:none}
+.panel.active{display:block}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.ph h2{margin:0;font-size:24px;color:var(--accent)}
+.ph .meta{color:var(--muted);font-size:14px}
+.lead{color:var(--muted);margin:0 0 18px;max-width:900px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+.card h3{margin:0 0 8px;font-size:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+.btn{font:inherit;font-size:14px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:7px 13px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent2);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent2);color:#fff}
+.btn.small{font-size:13px;padding:4px 10px}
+.btn.link{border:0;background:none;color:var(--accent2);padding:0;text-decoration:underline;cursor:pointer;text-align:left;font:inherit}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.navbtns{display:flex;justify-content:space-between;margin-top:8px}
+/* factor cards */
+.factor{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:18px;overflow:hidden}
+.fhead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 18px 6px}
+.fhead h3{margin:0;font-size:18px}
+.fhead .maxpts{font-size:13px;color:var(--muted);margin-left:8px}
+.fbadge{min-width:96px;text-align:center;font-size:14px;padding:5px 12px;border-radius:999px;background:#eef1f4;color:var(--muted);font-weight:600}
+.fintro{margin:0 18px 10px;color:var(--muted);font-size:14px}
+.tblwrap{overflow-x:auto;padding:0 18px}
+table.rt{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:820px}
+table.rt th,table.rt td{border-bottom:1px solid #edf0f3;padding:7px 8px;vertical-align:top;text-align:left}
+table.rt thead th{font-weight:600;font-size:12.5px;color:var(--ink);background:#f7f9fb;border-bottom:1px solid var(--line)}
+table.rt th.lab{width:22%;font-weight:600;color:var(--ink);background:#fbfcfd}
+table.rt thead th.lab{background:#f7f9fb}
+table.rt td.cell{cursor:pointer;width:15.6%;position:relative;transition:background .12s}
+table.rt td.cell:hover{background:#f1f6fb}
+table.rt td.cell.empty{color:#aab3bd;font-style:italic}
+table.rt td.cell.na{cursor:default;color:#b5bcc4}
+table.rt td.cell.na:hover{background:transparent}
+table.rt td.sel{font-weight:600}
+table.rt td.sel::after{content:"✓";position:absolute;top:4px;right:6px;font-size:12px}
+.k0.sel,.rrow .k0{background:var(--c0)!important}.k1.sel,.rrow .k1{background:var(--c1)!important}
+.k2.sel,.rrow .k2{background:var(--c2)!important}.k3.sel,.rrow .k3{background:var(--c3)!important}.k4.sel,.rrow .k4{background:var(--c4)!important}
+td.k0.sel{box-shadow:inset 0 0 0 2px var(--d0)}td.k1.sel{box-shadow:inset 0 0 0 2px var(--d1)}td.k2.sel{box-shadow:inset 0 0 0 2px var(--d2)}td.k3.sel{box-shadow:inset 0 0 0 2px var(--d3)}td.k4.sel{box-shadow:inset 0 0 0 2px var(--d4)}
+tr.rrow td{font-weight:600;cursor:pointer}
+tr.rrow td.hit{box-shadow:inset 0 0 0 2px var(--ink)}
+tr.info td,tr.info th{color:var(--muted);font-style:italic;background:#fcfcfd}
+tr.disabled th,tr.disabled td{opacity:.4}
+.inl{display:block;margin-top:5px}
+.inl input{width:120px;font:inherit;font-size:13px;padding:3px 6px;border:1px solid #c9d2db;border-radius:6px}
+.inl .u{font-weight:400;color:var(--muted);margin-left:4px;font-size:12px}
+.extras{padding:10px 18px 0;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:14px}
+.extras label{display:inline-flex;align-items:center;gap:6px}
+.extras input[type=number]{width:90px;font:inherit;font-size:13px;padding:3px 6px;border:1px solid #c9d2db;border-radius:6px}
+.adopt{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:12px 18px;margin-top:10px;background:#f7f9fb;border-top:1px solid var(--line);font-size:14px}
+.adopt .val{font-size:17px;font-weight:700}
+.adopt .src{font-size:12px;color:var(--muted)}
+.adopt input[type=number]{width:80px;font:inherit;font-size:13px;padding:3px 6px;border:1px solid #c9d2db;border-radius:6px}
+.adopt label{display:inline-flex;gap:6px;align-items:center}
+.adopt .spacer{flex:1}
+.warnline{color:#9a4b00;font-size:13px}
+details.guide{padding:0 18px 12px;font-size:14px}
+details.guide summary{cursor:pointer;color:var(--accent2);padding:8px 0 4px;font-weight:600;font-size:13.5px}
+details.guide p,details.guide li{color:#334152;margin:6px 0}
+details.guide ul{padding-left:20px;margin:6px 0}
+.helper{margin:10px 18px 0;padding:10px 12px;border:1px dashed #c3cfdb;border-radius:8px;background:#fbfdff;font-size:13.5px}
+.helper summary{cursor:pointer;font-weight:600;color:var(--accent2)}
+.helper .hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 14px;margin-top:8px}
+.helper label{display:flex;flex-direction:column;font-size:12.5px;color:var(--muted)}
+.helper input{font:inherit;font-size:13px;padding:4px 6px;border:1px solid #c9d2db;border-radius:6px;margin-top:2px}
+.helper .out{margin-top:8px;font-size:13px}
+.figlink{font-size:13px}
+.note{font-size:13px;color:var(--muted)}
+.callout{border-left:4px solid var(--accent2);background:#f3f8fd;padding:10px 14px;border-radius:0 8px 8px 0;font-size:14px;margin:10px 0}
+.callout.warn{border-color:#d9822b;background:#fff7ee}
+.callout.bad{border-color:var(--d0);background:#fdf1f2}
+ol.steps{margin:6px 0 0;padding-left:20px}
+ol.steps li{margin:4px 0}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 16px}
+.form label{display:flex;flex-direction:column;font-size:13px;color:var(--muted)}
+.form input{font:inherit;font-size:14px;padding:6px 8px;border:1px solid #c9d2db;border-radius:6px;margin-top:3px;color:var(--ink)}
+.figgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.figbtn{text-align:left;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;cursor:pointer;font:inherit;font-size:14px}
+.figbtn:hover{border-color:var(--accent2)}
+.figbtn .t{font-weight:600;color:var(--accent)}
+.figbtn .d{font-size:12.5px;color:var(--muted)}
+svg text{font-family:"Segoe UI",system-ui,Arial,sans-serif}
+.figure{margin:0}
+.figure figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+/* results */
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media (max-width:860px){.tiles{grid-template-columns:1fr 1fr}}
+.tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tile .k{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.tile .v{font-size:30px;font-weight:700;line-height:1.15;margin-top:4px}
+.tile .s{font-size:13px;color:var(--muted)}
+.tile.whc{border-width:2px}
+.sumtbl{width:100%;border-collapse:collapse;font-size:14px}
+.sumtbl th,.sumtbl td{padding:7px 8px;border-bottom:1px solid #edf0f3;text-align:left}
+.sumtbl thead th{font-size:12.5px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
+.sumtbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.sumtbl tr.tot td{font-weight:700;border-top:2px solid var(--line)}
+.bar{height:10px;background:#edf1f5;border-radius:6px;overflow:hidden;min-width:120px}
+.bar>span{display:block;height:100%;background:var(--accent2)}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12.5px;font-weight:600}
+.whc-tbl td,.whc-tbl th{padding:6px 10px}
+.whc-tbl tr.cur td{outline:2px solid var(--ink);outline-offset:-2px;font-weight:700}
+.loe{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:860px){.loe{grid-template-columns:1fr}}
+.loe div h4{margin:0 0 6px;font-size:14px;color:var(--accent)}
+.loe ul{margin:0;padding-left:18px;font-size:13.5px}
+.loe li{margin:3px 0}
+.scen{font-size:13.5px}
+.scen td{padding:5px 8px;border-bottom:1px solid #edf0f3}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(15,25,35,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal.open{display:flex}
+.modal .box{background:#fff;border-radius:12px;max-width:1000px;width:100%;max-height:92vh;overflow:auto;padding:18px 22px}
+.modal .mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.modal .mh h3{margin:0;color:var(--accent);font-size:18px}
+footer{border-top:1px solid var(--line);background:#fff}
+footer .wrap{padding:14px 20px;font-size:12.5px;color:var(--muted)}
+.printonly{display:none}
+@media print{
+  body{background:#fff;font-size:12px}
+  nav.tabs,.noprint,.navbtns,.modal{display:none!important}
+  .panel{display:none!important}
+  #p-results{display:block!important}
+  .printonly{display:block}
+  .card,.tile{break-inside:avoid;border-color:#bbb}
+  header.top{border:0}
+  main .wrap{padding-top:6px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><h1>WSRHC</h1><span class="sub">Waste Dump and Stockpile Stability Rating and Hazard Classification System</span></div>
+    <div class="cite"><b>Reference:</b> Hawley M. and Cunning J., (2017), “Guidelines for Mine Waste Dump and Stockpile Design”, CRC Press, 368 pages.</div>
+    <div class="module">Module: Yashar Pourrahimian</div>
+  </div>
+</header>
+
+<nav class="tabs noprint"><div class="wrap" id="tabbar"></div></nav>
+
+<main><div class="wrap" id="panels"></div></main>
+
+<footer><div class="wrap">
+  WSRHC interactive module · Rating tables follow Tables 3.3–3.11 and level of effort follows Table 3.12 of Hawley & Cunning (2017), Chapter 3 (M. Hawley). Figures are redrawn schematics for teaching use. The WSRHC is a screening and classification tool; it does not replace site-specific investigation, stability analysis or the judgement of a qualified geotechnical specialist.
+  <div class="module" style="margin-top:4px">Module: Yashar Pourrahimian</div>
+</div></footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="box">
+    <div class="mh"><h3 id="mtitle"></h3><button class="btn small" id="mclose">Close ✕</button></div>
+    <div id="mbody"></div>
+  </div>
+</div>
+
+<input type="file" id="importfile" accept=".json,application/json" style="display:none">
+
+<script>
+"use strict";
+/* =====================================================================
+   DATA — factor definitions (Tables 3.3 – 3.9)
+   dir 'hb' = higher value is worse (edges descending)
+   dir 'hg' = higher value is better (edges ascending)
+   ===================================================================== */
+const HB='hb', HG='hg';
+const GROUPS = [
+ { id:'regional', tab:'Regional', name:'Regional Setting', index:'EGI', max:10, table:'Table 3.3',
+   intro:'Factors related to the geographic location and climate of the site. Collectively worth up to 10 points (10% of the WSR).',
+   desc:{labels:['Very Adverse','Adverse','Neutral','Favourable','Very Favourable'], vals:[0,2.5,5,7.5,10]},
+   factors:[
+   { id:'seis', name:'Seismicity', max:2, ratings:[0,0.5,1,1.5,2], classes:['Very High','High','Moderate','Low','Very Low'],
+     intro:'Rated from the expected peak ground acceleration (PGA) at the site. Use either or both criteria; if both are entered the ratings are averaged.',
+     criteria:[
+      {id:'pga475', label:'Expected PGA (g) – 1:475-year event (10% probability of exceedance in 50 years)', type:'num', unit:'g', dir:HB, edges:[0.4,0.2,0.1,0.05], cells:['> 0.4','0.2–0.4','0.1–0.2','0.05–0.1','< 0.05']},
+      {id:'pgamce', label:'Expected PGA (g) – Maximum Credible Earthquake (MCE)', type:'num', unit:'g', dir:HB, edges:[0.6,0.4,0.2,0.1], cells:['> 0.6','0.4–0.6','0.2–0.4','0.1–0.2','< 0.1']}
+     ],
+     guide:`<p>PGA values are normally available from site seismic hazard studies (e.g. those prepared for tailings dam design) or from national/regional hazard maps and online tools (e.g. GSHAP, NRC, USGS).</p>
+     <p>The low weighting (2 points) reflects the limited documented influence of earthquakes on dump stability. Seismicity is also captured indirectly through the liquefaction factors and directly through Dynamic Stability, so high seismicity can still have a large combined effect on the WSR.</p>` },
+   { id:'precip', name:'Precipitation', max:8, ratings:[0,2,4,6,8], classes:['Very High','High','Moderate','Low','Very Low'],
+     intro:'Rated on equivalent annual precipitation including snowfall. Enter any of the criteria; multiple entries are averaged.',
+     criteria:[
+      {id:'rain', label:'Average annual rainfall', type:'num', unit:'mm', dir:HB, edges:[2000,1000,350,100], cells:['> 2000','1000–2000','350–1000','100–350','< 100']},
+      {id:'snow', label:'Average annual snowfall', type:'num', unit:'cm', dir:HB, edges:[200,100,35,10], cells:['> 200','100–200','35–100','10–35','< 10']},
+      {id:'tot', label:'Total annual precipitation (equivalent rainfall)', type:'num', unit:'mm', dir:HB, edges:[2000,1000,350,100], cells:['> 2000','1000–2000','350–1000','100–350','< 100']}
+     ],
+     flags:[{id:'intense', type:'check', label:'Site experiences intense seasonal rainfall or rapid runoff events (e.g. monsoon, rain-on-snow freshet) → reduce rating by 1 point'}],
+     adjust:(r,st)=> st.flags.intense ? Math.max(0, r-1) : r,
+     guide:`<p>Dumps built in wet environments fail more often: in the 1991 survey, the poorly performing dumps were generally subject to more than 1000 mm/yr of precipitation, while most well-performing dumps received less.</p>
+     <p>Annual totals alone do not capture intensity. Where intense seasonal rainfall or rapid snowmelt/runoff occurs, reduce the rating by 1 point (e.g. Moderate, 4 → 3). In this module the reduced rating is not taken below 0.</p>
+     <p>High precipitation also tends to worsen Groundwater and the two Liquefaction factors, so its total influence on the WSR can be substantial.</p>` }
+   ]},
+ { id:'foundation', tab:'Foundation', name:'Foundation Conditions', index:'EGI', max:20, table:'Table 3.4',
+   intro:'Physical attributes of the dump or stockpile footprint. Collectively worth up to 20 points. Undrained Failure Potential and Foundation Liquefaction Potential are negatively weighted (0 at best) and can trigger hazard-class overrides.',
+   desc:{labels:['Very Poor','Poor','Fair','Good','Very Good'], vals:[0,5,10,15,20]},
+   factors:[
+   { id:'fslope', name:'Foundation Slope', max:5, ratings:[0,1,2.5,4,5], classes:['Very Steep','Steep','Moderate','Gentle','Flat; benched bedrock slope; pit backfills'], fig:'f32',
+     intro:'Average overall foundation slope angle (see Figure 3.2). Use the least favourable value over the development cycle, not just the ultimate configuration (unless rating for closure only).',
+     criteria:[ {id:'ang', label:'Average overall foundation slope angle', type:'num', unit:'°', dir:HB, edges:[32,25,15,5], cells:['> 32','25–32','15–25','5–15','< 5']} ],
+     guide:`<p>Dumps on steep foundations are much more likely to be unstable or to deform excessively. In the 1991 survey, 29% of dumps on slopes steeper than 25° performed poorly, compared with 17% of those on flatter slopes.</p>
+     <p>Measure the angle from dump sequence plans and representative sections. If the interim phases are steeper than the ultimate dump, rate the least favourable phase.</p>` },
+   { id:'fshape', name:'Foundation Shape', max:2, ratings:[0,0.5,1,1.5,2], classes:null, fig:'fshape',
+     intro:'Degree of natural confinement provided by the foundation in section and in plan. Select one description in each row; the two are averaged.',
+     criteria:[
+      {id:'sec', group:'sec', label:'Section shape', type:'cat', opts:['Convex on Steep to Very Steep slopes','Convex on Moderate slopes; Concave or Planar on Steep to Very Steep slopes','Convex on Gentle slopes; Planar or Concave on Moderate slopes','Planar or Concave on Gentle slopes','Planar or Concave on Flat or very irregular slopes']},
+      {id:'plan', group:'plan', label:'Plan shape', type:'cat', opts:['Slopes with a pronounced convex plan shape (‘nose’)','Large radius convex slopes','Planar slopes with no lateral confinement','Concave slopes and wide valleys that provide limited natural confinement','Narrow valleys or gullies that provide substantial natural confinement']}
+     ],
+     guide:`<ul><li><b>Convex</b> foundations steepen towards the toe in section and lack lateral confinement in plan.</li>
+     <li><b>Concave</b> foundations flatten towards the toe in section and provide lateral confinement in plan.</li>
+     <li>For a similar overall slope, concave sections perform better than convex; planar sections fall in between, though on gentle slopes planar and concave behave similarly.</li>
+     <li>Irregular profiles with rolls or lateral ridges that interrupt the dump–foundation contact tend to perform better than uniform ones.</li>
+     <li>Dumps confined in narrow valleys or gullies outperform those on uniform slopes or on convex ‘noses’.</li></ul>` },
+   { id:'obtype', name:'Overburden Type', max:4, ratings:[0,1,2,3,4], classes:['Type I','Type II','Type III','Type IV','Type V'],
+     intro:'Soil or fill (including residual soils) underlying the dump. If a weak surficial layer will be stripped before construction, rate the remaining overburden. If the type varies across the footprint, choose a weighted intermediate value (use Override).',
+     criteria:[ {id:'d', label:'Description', type:'cat', opts:[
+      'Highly organic soils; very soft to soft silts and clays; very sensitive clays; other very weak soils',
+      'Soft to firm, weak or sensitive fine grained soils (e.g. lacustrine deposits, silts and clays, fine-grained residual soils)',
+      'Alluvial deposits; loose to moderately dense sands and gravels; mixed-grained colluvial deposits; sandy residual soils; stiff fine-grained soils',
+      'Highly weathered but coherent bedrock; competent talus deposits; moderately dense to dense, coarse-grained soils; moderately dense, mixed-grained moraine (glacial till)',
+      'Very dense, mixed-grained moraine (glacial till) and other very competent or hard soils; perpetually frozen soils with negligible potential for creep due to embankment loading; competent bedrock']} ],
+     guide:`<p>Indicative strength benchmarks for each type:</p>
+     <ul><li><b>Type I</b> – amorphous peat, very soft/very sensitive clays; undrained strength typically &lt; 10 kPa.</li>
+     <li><b>Type II</b> – lacustrine/glaciolacustrine deposits, alluvial silts and clays, weak clay-rich saprolites; s<sub>u</sub> &lt; 25 kPa and/or φ′ &lt; 15°. Fibrous peat and some topsoils may belong here.</li>
+     <li><b>Type III</b> – most medium to coarse alluvium, colluvium, sandy saprolites, stiff fine-grained soils; φ′ &gt; 25° or s<sub>u</sub> &gt; 50 kPa.</li>
+     <li><b>Type IV</b> – highly weathered coherent rock (‘sap-rock’), angular talus, dense coarse soils, moderately dense till, very stiff fine-grained soils; φ′ &gt; 30° or s<sub>u</sub> &gt; 200 kPa.</li>
+     <li><b>Type V</b> – dense till, very hard soils, competent bedrock directly beneath the dump (default), or permafrost proven by detailed investigation not to creep or thaw under the expected loads; φ′ &gt; 35° or s<sub>u</sub> &gt; 500 kPa.</li></ul>
+     <p>Transitional materials (saprolite, sap-rock) are classed as overburden or bedrock according to their expected behaviour.</p>` },
+   { id:'obthick', name:'Overburden Thickness', max:2, ratings:[0,0.5,1,1.5,2], classes:null,
+     intro:'Average overburden thickness, regardless of type. If a weak layer will be removed before construction, use the thickness that remains.',
+     criteria:[ {id:'t', label:'Average overburden thickness', type:'num', unit:'m', dir:HB, edges:[5,3,1,0.3], cells:['> 5','3–5','1–3','0.3–1','< 0.3']} ],
+     guide:`<p>A thin weak veneer may be displaced or penetrated by the fill, or economically stripped. Thicker deposits are more likely to contain weak lenses or layers, so the potential for instability increases with thickness.</p>` },
+   { id:'undr', name:'Undrained Failure Potential', max:0, ratings:[-20,-10,-5,-2.5,0], classes:['Very High','High','Moderate','Low','Negligible'], override:true,
+     intro:'Potential for undrained foundation failure when weak, saturated, low-permeability soils are loaded quickly. If unknown or not evaluated, use −5 (Moderate) and consult a geotechnical specialist.',
+     quick:[{label:'Not evaluated / unknown → −5', set:{d:[2]}}],
+     criteria:[ {id:'d', label:'Description', type:'cat', opts:[
+      'Saturated, normally or underconsolidated, compressible Type I or II soils that have very low hydraulic conductivity and behave as low-strength Sᵤ (frictionless) materials; very high potential for generation of excess pore pressures when loaded rapidly',
+      'Saturated, normally or slightly overconsolidated, compressible Type I or II soils that have low hydraulic conductivity and behave as Mohr-Coulomb (c-φ) materials; high potential for generation of excess pore pressures when loaded rapidly',
+      'Saturated, normally consolidated, mixed or fine-grained Type III or IV soils with low to moderate hydraulic conductivity and moderate potential for generation of excess pore pressures when loaded rapidly; unknown potential for undrained failure',
+      'Unsaturated, normally or overconsolidated, mixed or fine-grained Type III or IV soils with moderate hydraulic conductivity and low potential for generation of excess pore pressures when loaded rapidly; low potential for undrained failure but cannot be fully discounted',
+      'Heavily overconsolidated Type III, IV or V mixed-grained soils or competent bedrock or granular Type III or IV soils with high hydraulic conductivity, high strength and negligible potential for generation of excess pore pressures when loaded rapidly']} ],
+     guide:`<p>Rapid loading of saturated fine-grained soils can raise pore pressures faster than they dissipate; failure can then be sudden with very large displacements (e.g. the 2014 Mount Polley tailings dam failure).</p>
+     <p>Most susceptible: saturated, normally or slightly overconsolidated clays and silts, and clay-dominated residual soils/saprolites. Under adverse loading and groundwater conditions even moderately strong c-φ soils can be susceptible.</p>
+     <div class="callout bad"><b>Hazard-class override:</b> Very High → WHC V regardless of WSR. High → at least WHC IV (WHC V if WSR ≤ 20).</div>` },
+   { id:'fliq', name:'Foundation Liquefaction Potential', max:0, ratings:[-20,-10,-5,-2.5,0], classes:['Very High','High','Moderate','Low','Negligible'], override:true,
+     intro:'Susceptibility of foundation soils to static or dynamic liquefaction. If unknown or not evaluated, use −5 (Moderate) and consult a geotechnical specialist.',
+     quick:[{label:'Not evaluated / unknown → −5', set:{d:[2]}}],
+     criteria:[ {id:'d', label:'Description', type:'cat', opts:[
+      'Very uniform; very loose; minimal plastic fines; open, clast supported structure; high void ratio; rounded clasts; saturated',
+      'Extra-sensitive clays and extremely weak soils',
+      'Moderate (or unknown) liquefaction potential',
+      'Low liquefaction potential but cannot be fully discounted',
+      'Well graded; dense; high content of plastic fines; matrix supported structure; low void ratio; angular clasts; dry']} ],
+     guide:`<p>Liquefaction can follow earthquake shaking (dynamic) or high pore pressures from artesian flow, construction loading or sudden loss of confinement (static). Liquefied soil behaves like a fluid.</p>
+     <p>Most susceptible: uniformly graded, loose, saturated silts and fine sands with rounded particles and little clay; coarser deposits can also be susceptible under some conditions. Dense, well-graded, unsaturated, clayey, angular materials have low susceptibility.</p>
+     <div class="callout bad"><b>Hazard-class override:</b> Very High → WHC V regardless of WSR. High → at least WHC IV (WHC V if WSR ≤ 20).</div>` },
+   { id:'bedrock', name:'Bedrock', max:4, ratings:[0,1,2,3,4], classes:['Type A','Type B','Type C','Type D','Type E'],
+     intro:'Competency and structure of the bedrock beneath the foundation. Competency (description and/or GSI, RMR, Q) and Structure are each rated and then averaged.',
+     quick:[{label:'Poorly understood / not investigated → Type B default', set:{comp:[1],struct:[1]}}],
+     criteria:[
+      {id:'comp', group:'comp', label:'Competency', type:'cat', opts:[
+        'Very weak and/or highly clay altered, sheared or highly fractured rocks; laminated, highly carbonaceous coal measures; phyllite; flysch; GSI/RMR < 20; Q < 1',
+        'Fine-grained sedimentary rocks; moderately weathered or altered rocks; moderately to intensely fractured; GSI/RMR 20–40; Q 1–4',
+        'Moderately competent; moderately fractured; slightly weathered/altered; GSI/RMR 40–60; Q 4–10',
+        'Competent, hard, unweathered/unaltered, blocky; GSI/RMR 60–80; Q 10–40',
+        'Very competent, unweathered, unaltered, hard, massive; GSI/RMR > 80; Q > 40']},
+      {id:'gsi', group:'comp', label:'GSI or RMR (optional)', type:'num', unit:'', dir:HG, edges:[20,40,60,80], cells:['< 20','20–40','40–60','60–80','> 80']},
+      {id:'q', group:'comp', label:'Rock mass quality Q (optional)', type:'num', unit:'', dir:HG, edges:[1,4,10,40], cells:['< 1','1–4','4–10','10–40','> 40']},
+      {id:'struct', group:'struct', label:'Structure', type:'cat', opts:[
+        'Adversely oriented faults or shear zones; potential for structurally controlled foundation failure',
+        'Adversely oriented, continuous joints; potential for foundation failure on well-developed fabric anisotropy',
+        'Limited (or unknown) potential for foundation failure on major structure or moderately developed fabric anisotropy',
+        'Negligible potential for foundation failure on major structure or poorly developed fabric anisotropy',
+        'No adverse structure or fabric']}
+     ],
+     guide:`<ul><li><b>Type A</b> also covers foundations with discrete, persistent, adversely oriented faults, bedding or slope-scale joints (parallel to or undercut by the slope, or forming planar/wedge mechanisms).</li>
+     <li><b>Type B</b> is the investigation-level default for bedrock that is poorly understood or not investigated, or in formations prone to structurally controlled instability.</li>
+     <li><b>Type C</b> applies where stratigraphy/structure is reasonably understood from condemnation drilling and mapping and the potential for instability is limited.</li>
+     <li><b>Types D and E</b> must be supported by detailed <i>in situ</i> investigation.</li>
+     <li>GSI: Hoek et al. (2013); RMR: Bieniawski (1976); Q: Barton et al. (1974).</li></ul>` },
+   { id:'gw', name:'Groundwater', max:3, ratings:[0,0.75,1.5,2.25,3], classes:['High','(intermediate)','Moderate','(intermediate)','Low'],
+     intro:'Known or expected groundwater conditions in the foundation, considering both natural conditions and the effect of dump construction.',
+     criteria:[ {id:'d', label:'Expected groundwater conditions', type:'cat', opts:[
+      'Groundwater table at surface; active discharge or seepage; strong upward gradients; potential for generation of high pore pressures in foundation due to embankment loading',
+      'Intermediate – e.g. no evidence of discharge, seepage or standing water, but depth to groundwater and potential for adverse pore pressures unknown',
+      'Groundwater table > 5 m below ground surface; limited potential for development of adverse pore pressures in foundation due to embankment loading',
+      'Intermediate between Moderate and Low',
+      'Groundwater table at great depth; negligible potential for adverse pore pressures in foundation']} ],
+     guide:`<ul><li><b>High:</b> water table at/near surface or expected to rise to surface; toe in a discharge/seepage area or encroaching on wetlands, lakes or streams; strong upward gradient; potential for high construction-induced pore pressures.</li>
+     <li><b>Moderate:</b> maximum seasonal water table &gt; 5 m below surface and not expected to rise appreciably; flow parallel to slope or downward; limited potential for adverse pore pressures.</li>
+     <li><b>Low:</b> water table at great depth below the deepest potential failure surface; strong downward gradient; negligible potential for adverse pore pressures.</li>
+     <li>Discharge areas with upward gradients (valley bottoms) are more likely to produce elevated pore pressures than recharge areas (well-drained slopes, topographic highs).</li></ul>` }
+   ]},
+ { id:'material', tab:'Material', name:'Material Quality', index:'EGI', max:20, table:'Table 3.5',
+   intro:'Physical attributes of the waste rock or stockpile material that govern shear strength, deformation and hydrology of the structure. Collectively worth up to 20 points. Material Liquefaction Potential is negatively weighted and can trigger a hazard-class override.',
+   desc:{labels:['Very Poor','Poor','Fair','Good','Very Good'], vals:[0,5,10,15,20]},
+   factors:[
+   { id:'grad', name:'Gradation', max:7, ratings:[0,2,3.5,5,7], classes:['Very Fine Grained','','Mixed Grained','','Very Coarse Grained'],
+     intro:'Particle size distribution. Enter the indices available; all entered criteria are averaged. Plasticity applies only where fines content exceeds 10%.',
+     criteria:[
+      {id:'fines', label:'% fines (passing #200 sieve, < 0.075 mm)', type:'num', unit:'%', dir:HB, edges:[50,25,10,5], cells:['> 50%','25–50%','10–25%','5–10%','< 5%']},
+      {id:'coarse', label:'% greater than 75 mm (cobbles and boulders)', type:'num', unit:'%', dir:HG, edges:[10,25,50,75], cells:['< 10%','10–25%','25–50%','50–75%','> 75%']},
+      {id:'plast', label:'Plasticity of fines (only if fines > 10%)', type:'cat', na:[3,4], opts:['Highly plastic fines; LL > 50; PI > 20','Moderately plastic fines; LL 35–50; PI 10–20','Low plasticity fines; LL < 35; PI < 10','N/A','N/A']}
+     ],
+     guide:`<p>Well-graded materials with a high proportion of coarse, angular particles and few fines generally have higher shear strength than poorly graded, fine-grained materials. If fines are less than 10%, the coarse fraction is assumed to control behaviour.</p>
+     <p>LL = liquid limit, PI = plasticity index (Atterberg limits). High LL/PI indicates plastic clay and lower strength; low LL/PI indicates low-plasticity clays or non-plastic silts.</p>
+     <p>Where representative laboratory data are unavailable, use visual estimates and detailed lithological descriptions by an experienced geologist/geotechnical specialist, fragmentation studies, or photogrammetry of blasted material.</p>` },
+   { id:'intact', name:'Intact Strength and Durability', max:8, ratings:[0,2,4,6,8], classes:['Type 1','Type 2','Type 3','Type 4','Type 5'],
+     intro:'Strength (description and/or UCS) and Durability are each rated and averaged. Durability is assessed under expected ambient climatic conditions.',
+     criteria:[
+      {id:'str', group:'s', label:'Intact strength', type:'cat', opts:[
+        'Extremely weak to very weak rocks, R0–1 (UCS < 5 MPa); Type A bedrock; Types I and II overburden',
+        'Weak rocks, R2 (UCS 5–25 MPa); Type B bedrock; Types III, IV and most Type V overburden',
+        'Medium strong rocks, R3 (UCS 25–50 MPa); most Type C bedrock; coarse grained alluvium and talus derived from hard rocks',
+        'Strong to very strong rocks, R4 (UCS 50–100 MPa); most Type D bedrock',
+        'Very strong to extremely strong rocks R5–6 (UCS > 100 MPa); most Type E bedrock']},
+      {id:'ucs', group:'s', label:'UCS (optional)', type:'num', unit:'MPa', dir:HG, edges:[5,25,50,100], cells:['< 5','5–25','25–50','50–100','> 100']},
+      {id:'dur', group:'d', label:'Durability', type:'cat', opts:[
+        'Material subject to breakdown during placement, time dependent degradation due to slaking or freeze–thaw, or crushing under anticipated static loading', null,
+        'Material subject to limited breakdown during placement, time dependent degradation due to slaking or freeze–thaw, or crushing under anticipated static loading', null,
+        'Material not subject to breakdown during placement, time dependent degradation due to slaking or freeze–thaw, or crushing under anticipated static loading']},
+      {id:'perm', label:'Permafrost (reference)', type:'info', cells:['—','Perpetually frozen Type 1 materials','Perpetually frozen Type 2 materials','Perpetually frozen Type 3 materials','Perpetually frozen Types 4 and 5 materials']}
+     ],
+     flags:[{id:'frozen', type:'check', label:'Material will remain perpetually frozen (proven by detailed investigation) → move up one category (no benefit for Type 5)'}],
+     adjust:(r,st)=> st.flags.frozen ? Math.min(8, r+2) : r,
+     guide:`<ul><li><b>Type 1:</b> extremely weak to very weak, highly degradable (UCS ≤ 5 MPa, ≤ R1); breaks down under end-dumping or traffic, crushes under static load, slakes; weak plastic/organic soils.</li>
+     <li><b>Type 2:</b> weak, degradable rocks (UCS 5–25 MPa, R1–R2), low slake durability, moderate freeze–thaw susceptibility; most mixed-grained soils and medium alluvium.</li>
+     <li><b>Type 3:</b> moderately strong (UCS 25–50 MPa, R3), moderate durability; very coarse alluvium from durable rocks.</li>
+     <li><b>Type 4:</b> strong (UCS 50–100 MPa, R4), very durable; coarse angular talus of strong blocks.</li>
+     <li><b>Type 5:</b> very to extremely strong (UCS &gt; 100 MPa, ≥ R5), extremely durable; not susceptible to breakdown or crushing.</li></ul>
+     <p>Weak or non-durable particles generate fines during placement, over time, or by crushing in high dumps, which changes the gradation. The permafrost upgrade must be supported by investigation and testing showing the material will stay frozen and will not creep or thaw.</p>` },
+   { id:'mliq', name:'Material Liquefaction Potential', max:0, ratings:[-20,-10,-5,-2.5,0], classes:['Very High','High','Moderate or Unknown','Low','Negligible'], override:true,
+     intro:'Susceptibility of the dump or stockpile material itself to liquefaction. If unknown or not evaluated, use −5 and consult a geotechnical specialist.',
+     quick:[{label:'Not evaluated / unknown → −5', set:{d:[2]}}],
+     criteria:[ {id:'d', label:'Description', type:'cat', opts:[
+      'Very uniformly graded; very loose; minimal plastic fines; open, clast supported structure; high void ratio; rounded clasts; saturated',
+      null,
+      'Moderate (or unknown) liquefaction potential',
+      'Low liquefaction potential but cannot be fully discounted',
+      'Well graded; dense; high content of plastic fines; matrix supported structure; low void ratio; angular clasts; dry']} ],
+     guide:`<p>As for foundation soils, the most susceptible materials are very loose, saturated, uniformly graded, low-clay materials with rounded particles. Most waste rock is not susceptible, so the default for negligible potential is 0.</p>
+     <div class="callout bad"><b>Hazard-class override:</b> Very High → WHC V regardless of WSR. High → at least WHC IV (WHC V if WSR ≤ 20).</div>` },
+   { id:'chem', name:'Chemical Stability', max:5, ratings:[-5,-2.5,0,2.5,5], classes:['Highly Reactive','','Moderately Reactive','','Neutral'],
+     intro:'Potential for chemical degradation (e.g. sulphide oxidation, sulphate dissolution) and for precipitates that reduce permeability and raise pore pressures. ARD potential and Impact of precipitates are averaged.',
+     quick:[{label:'Not thoroughly characterised → 0', set:{ard:[2],ppt:[2]}}],
+     criteria:[
+      {id:'ard', group:'a', label:'ARD potential', type:'cat', opts:['High potential for chemical breakdown/oxidation/generation of ARD',null,'Moderate (or unknown) potential for chemical breakdown/oxidation/generation of ARD',null,'Very chemically stable material with negligible content of reactive minerals']},
+      {id:'ppt', group:'b', label:'Impact of precipitates', type:'cat', opts:['High potential for precipitates to fill voids, decrease hydraulic conductivity, and increase pore pressures over time',null,'Limited (or unknown) potential for precipitates to fill voids, decrease hydraulic conductivity, and increase pore pressures over time',null,'Negligible precipitates, or precipitates result in cementation and increase shear strength over time without adversely affecting pore pressures']}
+     ],
+     guide:`<p>Highly reactive materials score −5 to flag them for detailed evaluation; moderately reactive or uncharacterised materials score 0; materials definitively shown to have negligible potential for long-term chemical breakdown score +5.</p>
+     <p>The WSRHC does not address environmental impacts (e.g. metal leaching), although these may ultimately control design.</p>` }
+   ]},
+ { id:'geometry', tab:'Geometry', name:'Geometry and Mass', index:'DPI', max:10, table:'Table 3.6',
+   intro:'Size and shape of the waste dump or stockpile. Larger, higher and steeper structures are more susceptible to instability, and their failures tend to be larger with longer runout. Collectively worth up to 10 points.',
+   desc:{labels:['Very Large','Large','Medium','Small','Very Small'], vals:[0,2.5,5,7.5,10]},
+   factors:[
+   { id:'height', name:'Height', max:4, ratings:[0,1,2,3,4], classes:['Very High','High','Moderate','Low','Very Low'], fig:'f32',
+     intro:'Balance the three height parameters defined in Figure 3.2; all values entered are averaged.',
+     criteria:[
+      {id:'oh', label:'Overall height, toe to crest', type:'num', unit:'m', dir:HB, edges:[500,250,100,50], cells:['> 500','250–500','100–250','50–100','< 50']},
+      {id:'vt', label:'Maximum vertical thickness', type:'num', unit:'m', dir:HB, edges:[500,250,100,50], cells:['> 500','250–500','100–250','50–100','< 50']},
+      {id:'lh', label:'Maximum individual lift height', type:'num', unit:'m', dir:HB, edges:[200,100,50,25], cells:['> 200','100–200','50–100','25–50','< 25']}
+     ],
+     guide:`<p>Of the 16 poorly performing dumps in the 1991 survey, 44% were more than 250 m high. Overall height, maximum vertical fill thickness and maximum individual lift height are defined in Figure 3.2.</p>` },
+   { id:'slope', name:'Slope', max:4, ratings:[0,1,2,3,4], classes:['Very Steep','Steep','Moderate','Flat','Very Flat'], fig:'f32',
+     intro:'Overall fill slope angle, measured from toe to crest (Figure 3.2). Minimum default ratings apply to low dumps.',
+     criteria:[ {id:'ang', label:'Overall fill slope angle', type:'num', unit:'°', dir:HB, edges:[35,30,25,15], cells:['> 35','30–35','25–30','15–25','< 15']} ],
+     flags:[{id:'h', type:'num', unit:'m', label:'Overall slope height used for minimum default (taken from Height if blank)'}],
+     adjust:(r,st,S)=>{ const H = slopeHeight(S); if(H==null) return r; if(H<50) return Math.max(r,2); if(H<=100) return Math.max(r,1); return r; },
+     guide:`<p>To avoid unduly penalising low dumps built with repose-angle lifts: if the overall slope height is &lt; 50 m, the rating is at least 2; if it is 50–100 m, the rating is at least 1. The module applies these minima automatically.</p>
+     <p>In the 1991 survey, 56% of the poorly performing dumps had overall slopes steeper than 35°.</p>` },
+   { id:'volmass', name:'Volume and Mass', max:2, ratings:[0,0.5,1,1.5,2], classes:['Very Large','Large','Medium','Small','Very Small'],
+     intro:'Loose (bulk) volume and/or mass. Ranges assume a loose wet density of 2 t/m³ (in situ 2.7 t/m³, bulking factor 1.35). If your values differ materially, rate on mass only.',
+     criteria:[
+      {id:'vol', label:'Loose (bulk) volume', type:'num', unit:'m³', dir:HB, edges:[1e9,1e8,1e7,1e6], cells:['> 1×10⁹','1×10⁸ – 1×10⁹','1×10⁷ – 1×10⁸','1×10⁶ – 1×10⁷','< 1×10⁶']},
+      {id:'mass', label:'Mass', type:'num', unit:'t', dir:HB, edges:[2e9,2e8,2e7,2e6], cells:['> 2×10⁹','2×10⁸ – 2×10⁹','2×10⁷ – 2×10⁸','2×10⁶ – 2×10⁷','< 2×10⁶']}
+     ],
+     flags:[{id:'massonly', type:'check', label:'Rate on mass only (densities / bulking factor differ from benchmark values)'}],
+     helper:'volmass',
+     guide:`<p>Use loose (bulk) volume. If bank (in situ) volume is known, multiply by the bulking factor (typically ~1.25–1.5 for mass-blasted rock). Mass is usually the easiest parameter to obtain and is preferred when densities differ from the benchmark. Numbers can be typed in scientific notation, e.g. <code>1.5e8</code>.</p>` }
+   ]},
+ { id:'stability', tab:'Stability', name:'Stability Analysis', index:'DPI', max:10, table:'Table 3.7',
+   intro:'Captures differences in stability from objective stability analyses and the design acceptance criteria. Collectively worth up to 10 points (static 70%, dynamic 30%).',
+   desc:{labels:['Very Poor','Poor','Fair','Good','Very Good'], vals:[0,2.5,5,7.5,10]},
+   factors:[
+   { id:'stat', name:'Static Stability', max:7, ratings:[0,2,3.5,5,7], classes:null,
+     intro:'From 2D or 3D limit equilibrium or numerical analysis under normal (gravity) loading. Probabilistic (PoF) criteria apply to the static case only.',
+     quick:[{label:'No supporting stability analysis → 2', set:{oth:[1]}, clearNums:['fos','pof']}],
+     criteria:[
+      {id:'fos', label:'Factor of Safety (FoS) or Strength Reduction Factor (SRF)', type:'num', unit:'', dir:HG, edges:[1.1,1.2,1.3,1.5], cells:['< 1.1','1.1–1.2','1.2–1.3','1.3–1.5','> 1.5']},
+      {id:'pof', label:'Probability of Failure (PoF)', type:'num', unit:'%', dir:HB, edges:[20,10,5,1], cells:['> 20%','10–20%','5–10%','1–5%','< 1%']},
+      {id:'oth', label:'Other criteria', type:'cat', na:[3,4], opts:['Non-convergent numerical model','No supporting stability analysis','Convergent numerical model','—','—']}
+     ],
+     flags:[{id:'conf', type:'select', label:'Confidence in inputs and results', opts:['Moderate or higher (reviewed and accepted by a geotechnical specialist)','Low, or results judged unreliable']}],
+     warn:(st)=> st.flags.conf==1 ? 'Low confidence: the method requires a lower rating than the tabulated value. Use the Override box below to assign a reduced rating.' : '',
+     guide:`<ul><li>Table values assume at least moderate confidence in the input parameters and credible, reliable results reviewed by a geotechnical specialist (see Section 8.2 of the guidelines).</li>
+     <li>The FoS thresholds are the primary deterministic index. If results are expressed as SRF, decide (with a specialist) whether SRF is reasonably equivalent to FoS for that analysis.</li>
+     <li>Convergence-only numerical results: convergent → minimum default 3.5; non-convergent → 0.</li>
+     <li>No supporting analysis → low default of 2 (out of 7), to encourage designers to analyse stability.</li></ul>` },
+   { id:'dyn', name:'Dynamic Stability', max:3, ratings:[0,1,1.5,2,3], classes:null,
+     intro:'Stability under exceptional earthquake loading. Where pseudostatic analysis is used, apply an appropriate reduction to the design peak horizontal acceleration (e.g. Hynes-Griffin and Franklin 1984).',
+     quick:[{label:'No supporting stability analysis → 1', set:{oth:[1]}, clearNums:['fos']}],
+     criteria:[
+      {id:'fos', label:'Factor of Safety (FoS) or Strength Reduction Factor (SRF)', type:'num', unit:'', dir:HG, edges:[1.0,1.05,1.10,1.15], cells:['< 1.0','1.0–1.05','1.05–1.10','1.10–1.15','> 1.15']},
+      {id:'oth', label:'Other criteria', type:'cat', na:[3,4], opts:['Non-convergent numerical model','No supporting stability analysis','Convergent numerical model','—','—']}
+     ],
+     flags:[{id:'conf', type:'select', label:'Confidence in inputs and results', opts:['Moderate or higher (reviewed and accepted by a geotechnical specialist)','Low, or results judged unreliable']}],
+     warn:(st)=> st.flags.conf==1 ? 'Low confidence: the method requires a lower rating than the tabulated value. Use the Override box below to assign a reduced rating.' : '',
+     guide:`<ul><li>Convergence-only numerical results: convergent → minimum default 1.5; non-convergent → 0.</li>
+     <li>No supporting analysis → default of 1 (out of 3).</li>
+     <li>The same confidence requirements as for Static Stability apply.</li></ul>` }
+   ]},
+ { id:'construction', tab:'Construction', name:'Construction', index:'DPI', max:15, table:'Table 3.8',
+   intro:'Construction sequence and rate of development. Slow, bottom-up construction in thin lifts is much more stable than rapid construction in single high lifts. Collectively worth up to 15 points.',
+   desc:{labels:['Very Unfavourable','Unfavourable','Intermediate','Favourable','Very Favourable'], vals:[0,5,7.5,10,15]},
+   factors:[
+   { id:'method', name:'Construction Method', max:8, ratings:[0,2,4,6,8], classes:['Method I','Method II','Method III','Method IV','Method V'], fig:'f33',
+     intro:'Select the benchmark method (Figure 3.3) that best describes the development sequence. If the plan combines attributes of more than one method, use an intermediate rating (Override).',
+     criteria:[ {id:'d', label:'Description', type:'cat', opts:[
+      'Descending sequence with single or multiple (wrap-around), very high lifts constructed on very steep terrain; lift heights > 200 m; overall foundation slopes > 32°',
+      'Descending sequence with single or multiple (wrap-around) lifts constructed on steep terrain; lift heights < 200 m; overall foundation slopes 25–32°',
+      'Hybrid (combination of descending and ascending) sequence designed to avoid founding lift toes on steep or very steep terrain; lift heights < 200 m; overall foundation slopes > 25°',
+      'Ascending sequence with multiple lifts constructed on moderate terrain; lift heights < 100 m; overall foundation slopes 15–25°',
+      'Descending or ascending sequence on gentle or flat terrain; lift heights < 50 m; overall foundation slopes < 15°']} ],
+     guide:`<ul><li><b>Descending</b> = built top-down using wrap-around lifts; <b>ascending</b> = built in lifts from the bottom up.</li>
+     <li><b>Method I</b> is the least favourable geotechnically but often the most economical (short hauls).</li>
+     <li><b>Method III</b> (hybrid) starts with lifts on moderate terrain (local slopes &lt; 25°) and then wraps higher lifts onto them and onto steeper terrain.</li>
+     <li><b>Method V</b> (Va ascending, Vb descending) on gentle or flat ground with low lifts is the most stable.</li></ul>` },
+   { id:'load', name:'Loading Rate', max:7, ratings:[0,2,3.5,5,7], classes:['Very High','High','Moderate','Low','Very Low'],
+     intro:'Rate of construction per metre of active crest. Enter any of the three related parameters (all entries are averaged), or use the calculator. Mass Loading Rate is usually the easiest to obtain.',
+     criteria:[
+      {id:'vlr', label:'Volumetric Loading Rate', type:'num', unit:'m³/d/m', dir:HB, edges:[500,150,50,15], cells:['> 500','150–500','50–150','15–50','< 15']},
+      {id:'mlr', label:'Mass Loading Rate', type:'num', unit:'t/d/m', dir:HB, edges:[250,75,25,7.5], cells:['> 250','75–250','25–75','7.5–25','< 7.5']},
+      {id:'car', label:'Crest Advancement Rate', type:'num', unit:'m²/d', dir:HB, edges:[500,150,50,15], cells:['> 500','150–500','50–150','15–50','< 15']}
+     ],
+     flags:[{id:'massonly', type:'check', label:'Rate on Mass Loading Rate only (densities / bulking factor differ from benchmark values)'}],
+     helper:'load',
+     guide:`<ul><li><b>Volumetric Loading Rate</b> = average daily loose volume (m³/d) ÷ average active crest length (m); includes bulking.</li>
+     <li><b>Mass Loading Rate</b> = average daily mass placed (t/d) ÷ average active crest length (m).</li>
+     <li><b>Crest Advancement Rate</b> = average daily crest advance (m/d) × average lift height (m).</li>
+     <li>Ranges assume a loose wet density of 2.0 t/m³ (in situ 2.7 t/m³, bulking factor 1.35). If yours differ materially, adjust or rate on Mass Loading Rate only.</li>
+     <li>Slow construction allows consolidation, strength gain and dissipation of construction pore pressures.</li></ul>` }
+   ]},
+ { id:'performance', tab:'Performance', name:'Performance', index:'DPI', max:15, table:'Table 3.9',
+   intro:'Actual, documented stability performance of an existing waste dump or stockpile (instability and settlement). Ratings range from −15 to +15; negative ratings flag structures for further evaluation.',
+   desc:null,
+   factors:[
+   { id:'perf', name:'Stability Performance', max:15, ratings:[-15,-7.5,0,7.5,15], classes:['Very Poor','Poor','Fair','Good','Very Good'], override:true,
+     intro:'Select the description that best matches the documented performance. A new design, or a structure with no performance history, is rated Fair (0).',
+     quick:[{label:'No performance history / new design → Fair (0)', set:{d:[2]}}],
+     criteria:[ {id:'d', label:'Description', type:'cat', opts:[
+      'Unstable; substantial long-term closures or major remedial work required; large-scale (> 1×10⁶ t) instability; major impact on operations',
+      'Metastable to unstable; frequent short-term closures; frequent sliver/crest failures and/or local foundation failures, but no large-scale (> 1×10⁶ t) instabilities; moderate impact on operations',
+      'Metastable to stable; occasional closures due to deformation/settlement; occasional small sliver failures (< 1×10⁵ t); limited impact on operations; waste dumps and stockpiles with no performance history',
+      'Stable; minor deformation and/or settlement; rare closures; rare small failures; negligible impact on operations',
+      'Very stable; negligible deformation/settlement; no closures; no failures; no impact on operations']} ],
+     guide:`<div class="callout bad"><b>Hazard-class override:</b> Very Poor → WHC V regardless of WSR. Poor → at least WHC IV (WHC V if WSR ≤ 20).</div>` }
+   ]}
+];
+const ALLF = []; GROUPS.forEach(g=>g.factors.forEach(f=>{f.group=g.id; ALLF.push(f);}));
+const FBYID = Object.fromEntries(ALLF.map(f=>[f.id,f]));
+const WHC = [
+ null,
+ {n:'I',  hz:'Very Low Hazard', range:'80–100', k:4},
+ {n:'II', hz:'Low Hazard', range:'60–80', k:3},
+ {n:'III',hz:'Moderate Hazard', range:'40–60', k:2},
+ {n:'IV', hz:'High Hazard', range:'20–40', k:1},
+ {n:'V',  hz:'Very High Hazard', range:'< 20', k:0}
+];
+const KCOL=['var(--c0)','var(--c1)','var(--c2)','var(--c3)','var(--c4)'];
+const KHEX=['#f1b5bb','#f8cfa1','#e4e98c','#c6e4aa','#ace0e8'];
+const KDARK=['#b23a48','#c46a12','#8a8f00','#3f8a2a','#13808f'];
+
+/* Table 3.12 – level of effort (condensed wording) */
+const LOE = {
+ 1:{inv:['Basic desktop study and site reconnaissance to confirm assumptions and plan fieldwork','Limited mapping and test pitting to verify subsurface conditions','Material parameters from literature/experience, checked by limited field and laboratory index testing','Limited baseline environmental monitoring; condemnation drilling'],
+    des:['Simplified stability analyses confirming stability does not influence design and impacts are minor','Design by a geotechnical specialist, with peer review'],
+    con:['Minimal site preparation and minimal construction restrictions','Periodic visual monitoring','Periodic inspection by a geotechnical specialist']},
+ 2:{inv:['Desktop study and site reconnaissance; supplementary field investigations as needed','Mapping and test pitting to verify subsurface conditions','Material parameters validated by field and laboratory index testing','Environmental baseline monitoring; condemnation drilling'],
+    des:['Stability analyses confirming stability has limited influence on design','Design by an experienced geotechnical specialist, with peer review'],
+    con:['Limited site preparation (possibly minor diversions) and limited construction constraints','Standard instrument and visual monitoring with a basic trigger action response plan (TARP)','Periodic inspection by an experienced geotechnical specialist']},
+ 3:{inv:['Comprehensive desktop study and detailed site reconnaissance','Detailed mapping and subsurface investigation (test pits/trenches, limited drilling and sampling)','In situ instrumentation and testing, and laboratory testing of foundation and fill properties','Comprehensive baseline environmental monitoring; condemnation drilling'],
+    des:['Comprehensive stability analyses including runout potential','Qualitative risk assessment; design moderately constrained by stability','Design optimisation and impact-mitigation studies','Experienced geotechnical specialist, with peer review'],
+    con:['Moderate site preparation (possibly diversions and underdrainage); limited foundation instrumentation','Runout/rollout mitigation if required; moderately constrained sequence; control of fill quality and placement as needed','Loading / advance rate restrictions','Instrument and visual monitoring with well-defined TARPs; at least annual inspection by an experienced specialist']},
+ 4:{inv:['Detailed desktop study and comprehensive reconnaissance','Detailed, phased mapping and subsurface investigation (test pits/trenches, geophysics, specialised drilling and sampling)','In situ instrumentation/testing plus laboratory index and shear strength testing to a high degree of confidence','Comprehensive baseline environmental monitoring; condemnation drilling'],
+    des:['Phased design with detailed stability analyses of interim and final stages, including runout','Parametric studies; design constrained by stability and potential impacts','Semi-quantitative risk assessment; optimisation, trade-off and mitigation studies','Peer review, plus third-party specialist review at critical design stages'],
+    con:['Moderate to extensive site preparation (underdrainage, diversions); foundation and fill instrumentation','Runout/rollout mitigation; constrained sequence with control of fill quality and placement','Moderate to severe loading / advance rate restrictions','Detailed, redundant instrument and visual monitoring; site-specific TARPs; frequent specialist inspection; third-party review at least annually']},
+ 5:{inv:['Detailed desktop study and comprehensive reconnaissance','Detailed, phased investigation with extensive test pitting/trenching, geophysics, specialised drilling and sampling','Comprehensive in situ instrumentation/testing and sophisticated laboratory index and shear strength testing to a high degree of confidence','Extensive baseline environmental monitoring program; condemnation drilling'],
+    des:['Phased design with comprehensive, sophisticated stability analyses of interim and final stages; detailed runout assessments','Parametric studies; design heavily constrained by stability and potential impacts','Quantitative risk assessment; detailed optimisation, trade-off and mitigation studies','Peer review, plus expert review board at critical design stages'],
+    con:['Extensive site preparation, possibly critical underdrainage and diversions; foundation and fill instrumentation','Runout/rollout mitigation; highly constrained sequence with careful control of fill quality and placement','Severe loading / advance rate restrictions','Extensive multi-system redundant monitoring; site-specific TARPs; frequent specialist inspection; expert review board at least annually']}
+};
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+const STORE='wsrhc_module_v1';
+function blankState(){
+  const f={}; ALLF.forEach(x=>f[x.id]={sel:{},vals:{},flags:{},manual:null,helper:{}});
+  return {project:{name:'',dump:'',phase:'',by:'',date:''}, f, scenarios:[], tab:'overview'};
+}
+let S = blankState();
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(S)); }catch(e){} }
+function load(){
+  try{ const t=localStorage.getItem(STORE); if(!t) return; const o=JSON.parse(t); mergeState(o);}catch(e){}
+}
+function mergeState(o){
+  const b=blankState();
+  if(o && o.project) Object.assign(b.project,o.project);
+  if(o && o.f) for(const id in b.f){ if(o.f[id]) b.f[id]=Object.assign(b.f[id],o.f[id]); }
+  if(o && Array.isArray(o.scenarios)) b.scenarios=o.scenarios;
+  if(o && o.tab) b.tab=o.tab;
+  S=b;
+}
+
+/* =====================================================================
+   CALCULATIONS
+   ===================================================================== */
+function matchNum(c,v){
+  const e=c.edges, m=[];
+  if(c.dir===HB){
+    if(v>e[0]) m.push(0);
+    for(let k=1;k<=3;k++) if(v<=e[k-1] && v>=e[k]) m.push(k);
+    if(v<e[3]) m.push(4);
+  } else {
+    if(v<e[0]) m.push(0);
+    for(let k=1;k<=3;k++) if(v>=e[k-1] && v<=e[k]) m.push(k);
+    if(v>e[3]) m.push(4);
+  }
+  return m;
+}
+const avg = a => a.reduce((s,x)=>s+x,0)/a.length;
+function slopeHeight(St){
+  const s=St.f.slope; const h=s.flags.h;
+  if(h!==undefined && h!==null && h!=='' && isFinite(h)) return +h;
+  const oh=St.f.height.vals.oh; if(oh!==undefined && oh!==null && oh!=='' && isFinite(oh)) return +oh;
+  return null;
+}
+function critActive(f,c,st){
+  if(c.type==='info') return false;
+  if(f.id==='grad' && c.id==='plast'){ const fv=st.vals.fines; if(fv!==undefined && fv!=='' && isFinite(fv) && +fv<=10) return false; }
+  if(f.id==='volmass' && c.id==='vol' && st.flags.massonly) return false;
+  if(f.id==='load' && c.id!=='mlr' && st.flags.massonly) return false;
+  return true;
+}
+/* returns {auto, value, src} ; value null if unrated */
+function factorCalc(f, St=S){
+  const st=St.f[f.id];
+  const groups={};
+  f.criteria.forEach(c=>{
+    if(!critActive(f,c,st)) return;
+    const s=st.sel[c.id]; if(!s||!s.length) return;
+    const r=avg(s.map(k=>f.ratings[k]));
+    const g=c.group||'_all'; (groups[g]=groups[g]||[]).push(r);
+  });
+  const keys=Object.keys(groups);
+  let auto=null;
+  if(keys.length){ auto=avg(keys.map(k=>avg(groups[k]))); if(f.adjust) auto=f.adjust(auto,st,St); auto=Math.round(auto*1000)/1000; }
+  if(st.manual!==null && st.manual!=='' && isFinite(st.manual)) return {auto, value:+st.manual, src:'override'};
+  return {auto, value:auto, src: auto===null?'unrated':'auto'};
+}
+function compute(St=S){
+  const g={}, fr={}; let unrated=[];
+  GROUPS.forEach(G=>{ let sum=0, n=0; G.factors.forEach(f=>{ const c=factorCalc(f,St); fr[f.id]=c; if(c.value===null) unrated.push(f); else {sum+=c.value;n++;} }); g[G.id]={sum, n, of:G.factors.length}; });
+  const EGI=g.regional.sum+g.foundation.sum+g.material.sum;
+  const DPI=g.geometry.sum+g.stability.sum+g.construction.sum+g.performance.sum;
+  const WSR=EGI+DPI;
+  const base = WSR>=80?1: WSR>=60?2: WSR>=40?3: WSR>=20?4:5;
+  const ov=[];
+  const chk=(id,veryHigh,high,label)=>{ const v=fr[id].value; if(v===null) return;
+    if(v<=veryHigh) ov.push({cls:5, why:`${label} judged ${FBYID[id].id==='perf'?'Very Poor':'Very High'} → WHC V regardless of WSR`});
+    else if(v<=high) ov.push({cls: WSR<=20?5:4, why:`${label} judged ${FBYID[id].id==='perf'?'Poor':'High'} → WHC IV${WSR<=20?' (WSR ≤ 20, so WHC V)':''}`}); };
+  chk('undr',-20,-10,'Undrained Failure Potential');
+  chk('fliq',-20,-10,'Foundation Liquefaction Potential');
+  chk('mliq',-20,-10,'Material Liquefaction Potential');
+  chk('perf',-15,-7.5,'Stability Performance');
+  let fin=base; ov.forEach(o=>{ if(o.cls>fin) fin=o.cls; });
+  return {g, fr, EGI, DPI, WSR, base, final:fin, ov, unrated};
+}
+function fmt(x,d=2){ if(x===null||x===undefined||isNaN(x)) return '—'; let s=(Math.round(x*100)/100).toFixed(d); s=s.replace(/\.?0+$/,''); if(s==='-0') s='0'; return s.replace('-','−'); }
+function nearestK(vals,r){ if(r<=vals[0]) return 0; let b=0,bd=1e9; vals.forEach((v,i)=>{const d=Math.abs(v-r); if(d<bd-1e-9){bd=d;b=i;}}); return b; }
+function factorK(f,r){ if(r===null) return null; return nearestK(f.ratings,r); }
+function groupDesc(G,sum,R){
+  if(G.id==='performance'){ const f=G.factors[0]; const r=R.fr[f.id].value; if(r===null) return null; const k=factorK(f,r); return {label:f.classes[k],k}; }
+  const k=nearestK(G.desc.vals,sum); return {label:G.desc.labels[k],k};
+}
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* =====================================================================
+   FIGURES (SVG)
+   ===================================================================== */
+function fig31(R){
+  const W=940, fx=6, fw=236, gx=300, gw=160, ix=516, iw=172, wx=738, ww=94, hx=852, hw=82, bh=24, gap=6, ggap=16;
+  let y=40, out='', groupsY=[];
+  const defs=`<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="#4a5a6b"/></marker></defs>`;
+  GROUPS.forEach(G=>{
+    const top=y;
+    G.factors.forEach(f=>{
+      const v=R?R.fr[f.id].value:null;
+      out+=`<rect x="${fx}" y="${y}" width="${fw}" height="${bh}" rx="4" fill="#fff" stroke="#3b4a5a"/>`;
+      out+=`<text x="${fx+fw/2}" y="${y+16}" font-size="11.5" text-anchor="middle" fill="#1d2733">${esc(f.name)}${R&&v!==null?` (${fmt(v)})`:''}</text>`;
+      f._y=y+bh/2; y+=bh+gap;
+    });
+    const bot=y-gap; const cy=(top+bot)/2; const gh=Math.max(34,Math.min(60,bot-top));
+    groupsY.push({G,cy,gh});
+    G.factors.forEach(f=>{ out+=`<line x1="${fx+fw}" y1="${f._y}" x2="${gx-2}" y2="${cy}" stroke="#4a5a6b" stroke-width="1" marker-end="url(#ar)"/>`; });
+    y+=ggap;
+  });
+  const H=y+10;
+  const egi=groupsY.slice(0,3), dpi=groupsY.slice(3);
+  const eY=(egi[0].cy+egi[2].cy)/2, dY=(dpi[0].cy+dpi[3].cy)/2, wY=(eY+dY)/2;
+  groupsY.forEach(o=>{
+    const s=R?R.g[o.G.id].sum:null;
+    out+=`<g class="gbox" data-tab="${o.G.id}" style="cursor:pointer"><rect x="${gx}" y="${o.cy-o.gh/2}" width="${gw}" height="${o.gh}" rx="6" fill="#eef4fa" stroke="#1f4e79" stroke-width="1.4"/>`;
+    out+=`<text x="${gx+gw/2}" y="${o.cy-(R?3:-4)}" font-size="12.5" font-weight="600" text-anchor="middle" fill="#1f4e79">${esc(o.G.name)}</text>`;
+    if(R) out+=`<text x="${gx+gw/2}" y="${o.cy+13}" font-size="11.5" text-anchor="middle" fill="#334">${fmt(s)} / ${o.G.max}</text>`;
+    out+=`</g>`;
+    const ty=o.G.index==='EGI'?eY:dY;
+    out+=`<line x1="${gx+gw}" y1="${o.cy}" x2="${ix-2}" y2="${ty}" stroke="#4a5a6b" marker-end="url(#ar)"/>`;
+  });
+  const ib=(yy,t1,t2,val)=>`<rect x="${ix}" y="${yy-32}" width="${iw}" height="64" rx="6" fill="#fff" stroke="#1d2733" stroke-width="1.5"/><text x="${ix+iw/2}" y="${yy-10}" font-size="12" font-weight="700" text-anchor="middle">${t1}</text><text x="${ix+iw/2}" y="${yy+6}" font-size="12" font-weight="700" text-anchor="middle">${t2}</text>${val!==null?`<text x="${ix+iw/2}" y="${yy+23}" font-size="12" text-anchor="middle" fill="#1f4e79">${val}</text>`:''}`;
+  out+=ib(eY,'ENGINEERING GEOLOGY','INDEX (EGI)',R?`${fmt(R.EGI)} / 50`:null);
+  out+=ib(dY,'DESIGN & PERFORMANCE','INDEX (DPI)',R?`${fmt(R.DPI)} / 50`:null);
+  out+=`<line x1="${ix+iw}" y1="${eY}" x2="${wx-2}" y2="${wY-10}" stroke="#4a5a6b" marker-end="url(#ar)"/><line x1="${ix+iw}" y1="${dY}" x2="${wx-2}" y2="${wY+10}" stroke="#4a5a6b" marker-end="url(#ar)"/>`;
+  out+=`<rect x="${wx}" y="${wY-34}" width="${ww}" height="68" rx="6" fill="#1f4e79"/><text x="${wx+ww/2}" y="${wY-10}" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">WSR</text><text x="${wx+ww/2}" y="${wY+6}" font-size="11" fill="#dbe8f5" text-anchor="middle">EGI + DPI</text>${R?`<text x="${wx+ww/2}" y="${wY+24}" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">${fmt(R.WSR)}</text>`:''}`;
+  for(let c=1;c<=5;c++){
+    const yy=wY+(c-3)*62; const k=WHC[c].k; const cur=R&&R.final===c;
+    out+=`<line x1="${wx+ww}" y1="${wY}" x2="${hx-2}" y2="${yy}" stroke="#4a5a6b" marker-end="url(#ar)"/>`;
+    out+=`<rect x="${hx}" y="${yy-22}" width="${hw}" height="44" rx="6" fill="${KHEX[k]}" stroke="${cur?'#1d2733':KDARK[k]}" stroke-width="${cur?3:1.2}"/>`;
+    out+=`<text x="${hx+hw/2}" y="${yy-3}" font-size="12.5" font-weight="700" text-anchor="middle">WHC ${WHC[c].n}</text><text x="${hx+hw/2}" y="${yy+13}" font-size="10.5" text-anchor="middle">WSR ${WHC[c].range}</text>`;
+  }
+  const hdr=(x,t)=>`<text x="${x}" y="22" font-size="12" font-weight="700" text-anchor="middle" fill="#5b6876">${t}</text>`;
+  out=hdr(fx+fw/2,'FACTOR')+hdr(gx+gw/2,'GROUP')+hdr(ix+iw/2,'INDEX')+hdr(wx+ww/2,'RATING')+hdr(hx+hw/2,'HAZARD CLASS')+out;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Structure of the WSRHC system">${defs}${out}</svg>`;
+}
+
+function fig32(){
+  const F='20,400 200,398 350,380 500,340 620,280 720,200 820,150 920,128';
+  const dim=(x,y1,y2,lab,rot=true,lx=null)=>`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#1d2733" stroke-width="1" marker-start="url(#da)" marker-end="url(#da)"/>`+
+     (rot?`<text transform="translate(${lx??x-6},${(y1+y2)/2}) rotate(-90)" font-size="11" text-anchor="middle" fill="#1d2733">${lab}</text>`:'');
+  return `<svg viewBox="0 0 940 470" width="100%" role="img" aria-label="Geometry parameters">
+  <defs><marker id="da" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1L10,5L0,9z" fill="#1d2733"/></marker>
+  <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#c9d1d9" stroke-width="2"/></pattern></defs>
+  <polygon points="${F} 920,470 20,470" fill="url(#hatch)"/>
+  <polygon points="255,391.4 400,300 580,300 500,340 350,380" fill="#dfe8f1" stroke="#1d2733" stroke-width="1.3"/>
+  <polygon points="450,300 594,210 707.5,210 620,280 580,300" fill="#eaf0f6" stroke="#1d2733" stroke-width="1.3"/>
+  <polygon points="640,210 752,140 860,140 820,150 720,200 707.5,210" fill="#f3f6fa" stroke="#1d2733" stroke-width="1.3"/>
+  <polyline points="${F}" fill="none" stroke="#1d2733" stroke-width="3"/>
+  <text x="455" y="335" font-size="13" font-weight="700">LIFT 1</text>
+  <text x="600" y="255" font-size="13" font-weight="700">LIFT 2</text>
+  <text x="765" y="160" font-size="13" font-weight="700">LIFT 3</text>
+  <!-- slope lines -->
+  <line x1="255" y1="391.4" x2="752" y2="140" stroke="#1f4e79" stroke-dasharray="7 5" stroke-width="1.3"/>
+  <line x1="255" y1="391.4" x2="860" y2="140" stroke="#b23a48" stroke-dasharray="7 5" stroke-width="1.3"/>
+  <line x1="255" y1="391.4" x2="470" y2="391.4" stroke="#1d2733" stroke-width="1"/>
+  <path d="M375,391.4 A120,120 0 0 0 365.8,345.3" fill="none" stroke="#b23a48" stroke-width="1.4"/>
+  <path d="M440,391.4 A185,185 0 0 0 420,307.6" fill="none" stroke="#1f4e79" stroke-width="1.4"/>
+  <line x1="371" y1="370" x2="330" y2="428" stroke="#b23a48"/><text x="250" y="442" font-size="11" fill="#b23a48">OVERALL FOUNDATION</text><text x="250" y="455" font-size="11" fill="#b23a48">SLOPE ANGLE</text>
+  <line x1="436" y1="348" x2="470" y2="428" stroke="#1f4e79"/><text x="440" y="442" font-size="11" fill="#1f4e79">OVERALL FILL</text><text x="440" y="455" font-size="11" fill="#1f4e79">SLOPE ANGLE</text>
+  <!-- extension lines -->
+  <line x1="110" y1="391.4" x2="255" y2="391.4" stroke="#8795a3" stroke-width=".8"/>
+  <line x1="110" y1="140" x2="752" y2="140" stroke="#8795a3" stroke-width=".8"/>
+  <line x1="190" y1="300" x2="400" y2="300" stroke="#8795a3" stroke-width=".8"/>
+  <line x1="410" y1="210" x2="594" y2="210" stroke="#8795a3" stroke-width=".8"/>
+  ${dim(120,391.4,140,'OVERALL HEIGHT')}
+  ${dim(200,391.4,300,'LIFT 1 HEIGHT')}
+  ${dim(420,300,210,'LIFT 2 HEIGHT')}
+  ${dim(615,210,140,'LIFT 3 HEIGHT')}
+  ${dim(400,300,366.7,'',false)}
+  <line x1="400" y1="352" x2="430" y2="400" stroke="#1d2733" stroke-width=".8"/><text x="432" y="408" font-size="11">MAXIMUM THICKNESS – LIFT 1</text>
+  ${dim(594,210,293,'',false)}
+  <line x1="594" y1="270" x2="650" y2="330" stroke="#1d2733" stroke-width=".8"/><text x="652" y="335" font-size="11">MAXIMUM OVERALL</text><text x="652" y="348" font-size="11">(VERTICAL) THICKNESS</text>
+  </svg>`;
+}
+
+/* generic lift-section generator used for Figure 3.3 */
+function liftPanel(o){
+  const W=270, H=165, pad=8, rep=Math.tan(37*Math.PI/180);
+  const fz=x=>{ const p=o.found; for(let i=1;i<p.length;i++){ if(x<=p[i][0]){ const a=p[i-1],b=p[i]; return a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0]); } } const a=p[p.length-2],b=p[p.length-1]; return b[1]+(b[1]-a[1])*(x-b[0])/(b[0]-a[0]); };
+  let s=[]; for(let x=0;x<=W;x++) s.push(fz(x));
+  const Y=z=>H-pad-z;
+  let polys='', labels='', firstToe=null;
+  const fills=['#dbe6f1','#e9eff6','#f5f8fb'];
+  o.lifts.forEach((L,i)=>{
+    const ns=s.map((z,x)=>{ const top = x>=L.C ? L.E : L.E-(L.C-x)*rep; return Math.max(z,top); });
+    let xs=[]; for(let x=0;x<=W;x++) if(ns[x]>s[x]+0.3) xs.push(x);
+    if(xs.length){
+      const a=Math.max(0,xs[0]-1), b=Math.min(W,xs[xs.length-1]+1);
+      let pts=[]; for(let x=a;x<=b;x++) pts.push(`${x},${Y(ns[x]).toFixed(1)}`);
+      for(let x=b;x>=a;x--) pts.push(`${x},${Y(s[x]).toFixed(1)}`);
+      polys+=`<polygon points="${pts.join(' ')}" fill="${fills[i%3]}" stroke="#1d2733" stroke-width="1.1"/>`;
+      let sx=0,sz=0,sw=0; xs.forEach(x=>{const t=ns[x]-s[x]; sx+=x*t; sz+=(ns[x]+s[x])/2*t; sw+=t;});
+      const cx=sx/sw, cz=sz/sw;
+      labels+=`<circle cx="${cx.toFixed(1)}" cy="${Y(cz).toFixed(1)}" r="8" fill="#fff" stroke="#1d2733"/><text x="${cx.toFixed(1)}" y="${(Y(cz)+4).toFixed(1)}" font-size="10.5" font-weight="700" text-anchor="middle">${i+1}</text>`;
+      if(firstToe===null||xs[0]<firstToe) firstToe=xs[0];
+    }
+    s=ns;
+  });
+  let fpts=[]; for(let x=0;x<=W;x++) fpts.push(`${x},${Y(fz(x)).toFixed(1)}`);
+  const ground=`<polygon points="${fpts.join(' ')} ${W},${H} 0,${H}" fill="#eef1f4"/><polyline points="${fpts.join(' ')}" fill="none" stroke="#1d2733" stroke-width="2.2"/>`;
+  const ann=(o.ann||[]).map(a=> a[0]===0 ? `<text x="${W-6}" y="${H-24}" font-size="11.5" text-anchor="end" fill="#b23a48" font-weight="700">foundation ${a[2]}</text>` : `<text x="${a[0]}" y="${a[1]}" font-size="11" fill="#1f4e79" font-weight="600">${a[2]}</text>`).join('');
+  const dirn=o.dir?`<text x="${W-6}" y="${H-12}" font-size="10" text-anchor="end" fill="#5b6876">${o.dir}</text>`:'';
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%"><defs><clipPath id="cp${o.id}"><rect x="0" y="0" width="${W}" height="${H}"/></clipPath></defs><g clip-path="url(#cp${o.id})">${ground}${polys}${labels}</g>${ann}${dirn}<text x="8" y="16" font-size="12.5" font-weight="700" fill="#1d2733">${o.title}</text></svg>`;
+}
+function fig33(){
+  const t=d=>Math.tan(d*Math.PI/180);
+  const P=[
+   {id:'m1',title:'METHOD I',found:[[0,0],[40,0],[90,50*t(15)],[270,50*t(15)+180*t(48)]], lifts:[{E:128,C:172},{E:128,C:140}], ann:[[96,40,'> 200 m'],[0,0,'> 32°']], dir:'descending, wrap-around'},
+   {id:'m2',title:'METHOD II',found:[[0,0],[50,0],[270,220*t(28)]], lifts:[{E:105,C:185},{E:70,C:120},{E:35,C:55}], ann:[[150,40,'< 200 m'],[0,0,'25–32°']], dir:'descending'},
+   {id:'m3',title:'METHOD III',found:[[0,0],[20,0],[110,90*t(18)],[270,90*t(18)+160*t(30)]], lifts:[{E:40,C:55},{E:108,C:185},{E:76,C:112}], ann:[[150,40,'< 200 m'],[0,0,'> 25°']], dir:'hybrid'},
+   {id:'m4',title:'METHOD IV',found:[[0,0],[20,0],[270,250*t(20)]], lifts:[{E:30,C:50},{E:62,C:118},{E:94,C:190}], ann:[[150,40,'< 100 m per lift'],[0,0,'15–25°']], dir:'ascending'},
+   {id:'m5a',title:'METHOD Va',found:[[0,0],[20,0],[270,250*t(9)]], lifts:[{E:22,C:40},{E:44,C:105},{E:66,C:170}], ann:[[150,40,'< 50 m per lift'],[0,0,'< 15°']], dir:'ascending'},
+   {id:'m5b',title:'METHOD Vb',found:[[0,0],[20,0],[270,250*t(9)]], lifts:[{E:66,C:165},{E:44,C:100},{E:22,C:40}], ann:[[150,40,'< 50 m per lift'],[0,0,'< 15°']], dir:'descending'}
+  ];
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">${P.map(p=>`<div style="border:1px solid var(--line);border-radius:8px;padding:4px">${liftPanel(p)}</div>`).join('')}</div>
+  <p class="note">Circled numbers show the order in which lifts are placed. Descending = top-down with wrap-around lifts; ascending = bottom-up.</p>`;
+}
+function figShape(){
+  const sec=(x,title,d)=>`<g transform="translate(${x},0)"><rect x="0" y="0" width="200" height="130" rx="8" fill="#fff" stroke="#d9e0e7"/><path d="${d} L190,118 L10,118 Z" fill="#eef1f4"/><path d="${d}" fill="none" stroke="#1d2733" stroke-width="2.2"/><text x="100" y="18" font-size="12" font-weight="700" text-anchor="middle">${title}</text><text x="14" y="112" font-size="10" fill="#5b6876">toe</text><text x="186" y="40" font-size="10" fill="#5b6876" text-anchor="end">crest</text></g>`;
+  const plan=(x,title,v)=>{ let p=''; for(let i=0;i<4;i++){ const y=40+i*20; p+= v===0?`<line x1="20" y1="${y}" x2="180" y2="${y}" stroke="#1d2733"/>`:`<polyline points="20,${y-v*0.4} 100,${y+v} 180,${y-v*0.4}" fill="none" stroke="#1d2733"/>`; }
+    return `<g transform="translate(${x},0)"><rect x="0" y="0" width="200" height="130" rx="8" fill="#fff" stroke="#d9e0e7"/>${p}<text x="100" y="18" font-size="12" font-weight="700" text-anchor="middle">${title}</text><line x1="190" y1="34" x2="190" y2="112" stroke="#b23a48" marker-end="url(#da2)"/><text x="186" y="124" font-size="9.5" text-anchor="end" fill="#b23a48">downslope</text></g>`; };
+  return `<svg viewBox="0 0 640 130" width="100%"><defs><marker id="da2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#b23a48"/></marker></defs>
+   ${sec(0,'Convex section','M10,112 Q 50,30 190,26')}${sec(220,'Planar section','M10,112 L190,26')}${sec(440,'Concave section','M10,112 Q 150,108 190,26')}</svg>
+   <p class="note" style="margin:4px 0 10px">Section view: convex foundations steepen towards the toe; concave foundations flatten towards the toe.</p>
+   <svg viewBox="0 0 640 130" width="100%">${plan(0,'Convex plan (“nose”)',16)}${plan(220,'Planar (no confinement)',0)}${plan(440,'Concave plan (valley/gully)',-16)}</svg>
+   <p class="note" style="margin:4px 0 0">Plan view (topographic contours): a “nose” offers no lateral confinement; valleys and gullies confine the fill.</p>`;
+}
+/* Figure 3.4 – WSR/WHC chart */
+function whcOf(w){ return w>=80?1: w>=60?2: w>=40?3: w>=20?4:5; }
+function fig34(points){
+  const L=58, T=34, C=42, N=10, Wd=L+C*N+20, Hd=T+C*N+52;
+  let g='';
+  for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+    const val=(i+1)*5+j*5; const k=WHC[whcOf(val)].k;
+    const x=L+i*C, y=T+(N-1-j)*C;
+    const lab = (i===0&&j===0)?'≤5':(i===N-1&&j===N-1)?'≥95':val;
+    g+=`<rect x="${x}" y="${y}" width="${C}" height="${C}" fill="${KHEX[k]}" stroke="#fff" stroke-width="1.5"/><text x="${x+C/2}" y="${y+C/2+4}" font-size="11" text-anchor="middle" fill="#3a4654">${lab}</text>`;
+  }
+  const X=v=>L+v/50*C*N, Yv=v=>T+C*N-v/50*C*N;
+  let lines='';
+  [20,40,60,80].forEach(w=>{ const x1=Math.max(0,w-50), y1=w-x1, x2=Math.min(50,w), y2=w-x2; lines+=`<line x1="${X(x1)}" y1="${Yv(y1)}" x2="${X(x2)}" y2="${Yv(y2)}" stroke="#1d2733" stroke-width="1.2" stroke-dasharray="5 4" opacity=".55"/><text x="${X(x2)+3}" y="${Yv(y2)-3}" font-size="10" fill="#1d2733" opacity=".7">${''}</text>`; });
+  let axes='';
+  for(let v=0;v<=50;v+=10){ axes+=`<text x="${X(v)}" y="${T+C*N+16}" font-size="11" text-anchor="middle">${v}</text><text x="${L-8}" y="${Yv(v)+4}" font-size="11" text-anchor="end">${v}</text>`; }
+  axes+=`<text x="${L+C*N/2}" y="${T+C*N+38}" font-size="12" font-weight="700" text-anchor="middle">DESIGN AND PERFORMANCE INDEX (DPI)</text>`;
+  axes+=`<text transform="translate(16,${T+C*N/2}) rotate(-90)" font-size="12" font-weight="700" text-anchor="middle">ENGINEERING GEOLOGY INDEX (EGI)</text>`;
+  axes+=`<text x="${L+C*N/2}" y="18" font-size="12.5" font-weight="700" text-anchor="middle">WSR (cell values) AND HAZARD CLASS (WHC) CHART</text>`;
+  let pts='';
+  (points||[]).forEach(p=>{
+    const off = p.dpi<0||p.dpi>50||p.egi<0||p.egi>50;
+    const cx=X(Math.max(0,Math.min(50,p.dpi))), cy=Yv(Math.max(0,Math.min(50,p.egi)));
+    pts+= p.main
+      ? `<circle cx="${cx}" cy="${cy}" r="9" fill="${p.color}" stroke="#fff" stroke-width="2.5"/><circle cx="${cx}" cy="${cy}" r="12" fill="none" stroke="#1d2733" stroke-width="1.5"/>`
+      : `<rect x="${cx-6}" y="${cy-6}" width="12" height="12" transform="rotate(45 ${cx} ${cy})" fill="${p.color}" stroke="#fff" stroke-width="1.5"/>`;
+    pts+=`<text x="${cx+14}" y="${cy-10}" font-size="11.5" font-weight="700" fill="#1d2733" paint-order="stroke" stroke="#fff" stroke-width="3">${esc(p.label)}${off?' (off chart)':''}</text>`;
+  });
+  const leg=[1,2,3,4,5].map((c,i)=>`<rect x="${L+i*84}" y="${Hd-12}" width="12" height="12" fill="${KHEX[WHC[c].k]}"/><text x="${L+i*84+16}" y="${Hd-2}" font-size="11">WHC ${WHC[c].n}</text>`).join('');
+  return `<svg viewBox="0 0 ${Wd} ${Hd+6}" width="100%" style="max-width:560px" role="img" aria-label="WSR and WHC chart">${g}${lines}<rect x="${L}" y="${T}" width="${C*N}" height="${C*N}" fill="none" stroke="#1d2733"/>${axes}${pts}${leg}</svg>`;
+}
+const FIGS = {
+ f31:{t:'Figure 3.1 – Structure of the WSRHC system', d:'Factors → groups → indices → WSR → WHC', html:()=>fig31(compute())+'<p class="note">Live values from your current ratings are shown in brackets. Click a group box to open its tab.</p>'},
+ f32:{t:'Figure 3.2 – Geometry parameters', d:'Heights, thicknesses, slope angles', html:()=>fig32()+'<p class="note">Overall height is measured toe to crest; maximum vertical thickness is the greatest vertical distance from the fill surface to the foundation; the overall fill slope angle joins toe and crest; the overall foundation slope angle joins the toe and the upper fill–foundation contact.</p>'},
+ f33:{t:'Figure 3.3 – Construction methods', d:'Benchmark Methods I–V', html:()=>fig33()},
+ f34:{t:'Figure 3.4 – WSR and hazard class (WHC) chart', d:'EGI vs DPI with WSR cell values', html:()=>{ const R=compute(); return fig34([{dpi:R.DPI,egi:R.EGI,label:'Current',main:true,color:'#1f4e79'}])+'<p class="note">Each cell shows the WSR (= EGI + DPI) at that location; colours show the hazard class. Dashed lines mark WSR = 20, 40, 60 and 80.</p>'; }},
+ fshape:{t:'Foundation shape – explanatory sketches', d:'Section and plan shapes (supplementary)', html:()=>figShape()+'<p class="note">Supplementary sketches prepared for this module to illustrate the Foundation Shape descriptions in Table 3.4.</p>'}
+};
+function openFig(id){ const F=FIGS[id]; document.getElementById('mtitle').textContent=F.t; document.getElementById('mbody').innerHTML=F.html(); document.getElementById('modal').classList.add('open'); }
+document.getElementById('mclose').onclick=()=>document.getElementById('modal').classList.remove('open');
+document.getElementById('modal').addEventListener('click',e=>{ if(e.target.id==='modal') e.currentTarget.classList.remove('open'); const gb=e.target.closest('.gbox'); if(gb){ e.currentTarget.classList.remove('open'); showTab(gb.dataset.tab);} });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.getElementById('modal').classList.remove('open'); });
+
+/* =====================================================================
+   RENDERING
+   ===================================================================== */
+const TABS=[{id:'overview',label:'Overview'}].concat(GROUPS.map((g,i)=>({id:g.id,label:g.tab,num:i+1}))).concat([{id:'results',label:'Results'}]);
+function renderTabbar(){
+  const R=compute();
+  document.getElementById('tabbar').innerHTML = TABS.map(t=>{
+    let prog='';
+    if(t.num){ const gg=R.g[t.id]; prog=`<span class="prog ${gg.n===gg.of?'done':''}">${gg.n===gg.of?'✓':gg.n+'/'+gg.of}</span>`; }
+    return `<button class="tab ${S.tab===t.id?'active':''}" data-tab="${t.id}">${t.num?`<span class="num">${t.num}</span>`:''}${t.label}${prog}</button>`;
+  }).join('') + (R.unrated.length===ALLF.length ? `<span class="chip" data-tab="results">No factors rated yet</span>` : `<span class="chip" data-tab="results" title="Live result – click for details">WSR <b>${fmt(R.WSR,1)}</b> · WHC <b>${WHC[R.final].n}</b>${R.unrated.length?' <span style="color:#9a4b00">(provisional)</span>':''}</span>`);
+}
+document.getElementById('tabbar').addEventListener('click',e=>{ const b=e.target.closest('[data-tab]'); if(b) showTab(b.dataset.tab); });
+
+function showTab(id){
+  S.tab=id; save();
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active', p.id==='p-'+id));
+  if(id==='results') renderResults();
+  if(id==='overview') renderOverviewFig();
+  renderTabbar();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function cellText(c,k){
+  if(c.type==='num'||c.type==='info') return esc(c.cells[k]);
+  const o=c.opts[k]; return o===null||o===undefined ? '' : esc(o);
+}
+function renderFactor(f){
+  const st=S.f[f.id];
+  const head = `<tr><th class="lab">${f.classes?'Class':'Criterion'}</th>${[0,1,2,3,4].map(k=>`<th>${f.classes?esc(f.classes[k]):''}</th>`).join('')}</tr>`;
+  let rows='';
+  f.criteria.forEach(c=>{
+    if(c.type==='info'){ rows+=`<tr class="info"><th class="lab">${esc(c.label)}</th>${[0,1,2,3,4].map(k=>`<td>${cellText(c,k)}</td>`).join('')}</tr>`; return; }
+    const inp = c.type==='num' ? `<span class="inl"><input type="number" step="any" data-f="${f.id}" data-c="${c.id}" value="${st.vals[c.id]??''}" placeholder="value" aria-label="${esc(c.label)}"><span class="u">${esc(c.unit)}</span></span>` : '';
+    rows+=`<tr data-row="${c.id}"><th class="lab">${esc(c.label)}${inp}</th>${[0,1,2,3,4].map(k=>{
+      const na = c.na && c.na.includes(k);
+      const txt = cellText(c,k);
+      const empty = c.type==='cat' && !txt && !na;
+      return `<td class="cell k${k} ${na?'na':''} ${empty?'empty':''}" data-f="${f.id}" data-c="${c.id}" data-k="${k}" ${na?'':'tabindex="0" role="button"'}>${na?esc(c.opts[k]):(empty?'intermediate':txt)}</td>`;
+    }).join('')}</tr>`;
+  });
+  rows+=`<tr class="rrow"><th class="lab">Rating</th>${f.ratings.map((r,k)=>`<td class="k${k}" data-rate="${k}" data-f="${f.id}" title="Click to adopt this rating directly">${fmt(r)}</td>`).join('')}</tr>`;
+  let extras='';
+  (f.quick||[]).forEach((q,i)=>{ extras+=`<button class="btn small" data-quick="${i}" data-f="${f.id}">${esc(q.label)}</button>`; });
+  (f.flags||[]).forEach(fl=>{
+    if(fl.type==='check') extras+=`<label><input type="checkbox" data-flag="${fl.id}" data-f="${f.id}" ${st.flags[fl.id]?'checked':''}> ${esc(fl.label)}</label>`;
+    if(fl.type==='num') extras+=`<label>${esc(fl.label)} <input type="number" step="any" data-flag="${fl.id}" data-f="${f.id}" value="${st.flags[fl.id]??''}"> ${esc(fl.unit||'')}</label>`;
+    if(fl.type==='select') extras+=`<label>${esc(fl.label)}: <select data-flag="${fl.id}" data-f="${f.id}">${fl.opts.map((o,i)=>`<option value="${i}" ${(+st.flags[fl.id]||0)===i?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`;
+  });
+  if(f.fig) extras+=`<button class="btn link figlink" data-fig="${f.fig}">View ${FIGS[f.fig].t.split('–')[0].trim()}</button>`;
+  let helper='';
+  if(f.helper==='volmass'){
+    const h=st.helper;
+    helper=`<details class="helper"><summary>Calculator: volume and mass from bank volume</summary><div class="hgrid">
+      <label>Bank (in situ) volume, BCM<input type="number" step="any" data-h="bcm" data-f="${f.id}" value="${h.bcm??''}"></label>
+      <label>Bulking factor<input type="number" step="any" data-h="bf" data-f="${f.id}" value="${h.bf??1.35}"></label>
+      <label>Loose wet density, t/m³<input type="number" step="any" data-h="rho" data-f="${f.id}" value="${h.rho??2.0}"></label></div>
+      <div class="out" data-hout="${f.id}"></div><div class="btnrow" style="margin-top:6px"><button class="btn small" data-happly="${f.id}">Use these values</button></div></details>`;
+  }
+  if(f.helper==='load'){
+    const h=st.helper;
+    helper=`<details class="helper"><summary>Calculator: loading rates</summary><div class="hgrid">
+      <label>Average daily mass placed, t/d<input type="number" step="any" data-h="tpd" data-f="${f.id}" value="${h.tpd??''}"></label>
+      <label>Average active crest length, m<input type="number" step="any" data-h="crest" data-f="${f.id}" value="${h.crest??''}"></label>
+      <label>Loose wet density, t/m³<input type="number" step="any" data-h="rho" data-f="${f.id}" value="${h.rho??2.0}"></label>
+      <label>Average crest advance, m/d<input type="number" step="any" data-h="adv" data-f="${f.id}" value="${h.adv??''}"></label>
+      <label>Average lift height, m<input type="number" step="any" data-h="lift" data-f="${f.id}" value="${h.lift??''}"></label></div>
+      <div class="out" data-hout="${f.id}"></div><div class="btnrow" style="margin-top:6px"><button class="btn small" data-happly="${f.id}">Use these values</button></div></details>`;
+  }
+  const min=Math.min(...f.ratings), max=Math.max(...f.ratings);
+  return `<section class="factor" id="fc-${f.id}">
+    <div class="fhead"><div><h3 style="display:inline">${esc(f.name)}</h3><span class="maxpts">${f.max>0?`max ${fmt(f.max)} pts`:`range ${fmt(min)} to 0 pts`}</span></div><div class="fbadge" data-badge="${f.id}">not rated</div></div>
+    <p class="fintro">${f.intro}</p>
+    <div class="tblwrap"><table class="rt"><thead>${head}</thead><tbody>${rows}</tbody></table></div>
+    ${extras?`<div class="extras">${extras}</div>`:''}
+    ${helper}
+    <div class="adopt">
+      <span>Adopted rating: <span class="val" data-adopt="${f.id}">—</span> <span class="src" data-src="${f.id}"></span></span>
+      <span class="warnline" data-warn="${f.id}"></span>
+      <span class="spacer"></span>
+      <label title="Use for intermediate or adjusted values">Override <input type="number" step="0.25" min="${min}" max="${max}" data-ovr="${f.id}" value="${st.manual??''}" placeholder="auto"></label>
+      <button class="btn small" data-clear="${f.id}">Clear factor</button>
+    </div>
+    <details class="guide"><summary>Guidance</summary>${f.guide||''}</details>
+  </section>`;
+}
+function refreshFactor(f){
+  const st=S.f[f.id]; const card=document.getElementById('fc-'+f.id); if(!card) return;
+  f.criteria.forEach(c=>{
+    const tr=card.querySelector(`tr[data-row="${c.id}"]`); if(!tr) return;
+    const s=st.sel[c.id]||[]; const act=critActive(f,c,st);
+    tr.classList.toggle('disabled',!act);
+    tr.querySelectorAll('td.cell').forEach(td=>td.classList.toggle('sel', s.includes(+td.dataset.k)));
+  });
+  const r=factorCalc(f);
+  const k=factorK(f,r.value);
+  const badge=card.querySelector(`[data-badge="${f.id}"]`);
+  if(r.value===null){ badge.textContent='not rated'; badge.style.background='#eef1f4'; badge.style.color='var(--muted)'; }
+  else { badge.textContent=`${fmt(r.value)} / ${fmt(f.max)}`; badge.style.background=KHEX[k]; badge.style.color='#1d2733'; }
+  card.querySelector(`[data-adopt="${f.id}"]`).textContent=fmt(r.value);
+  card.querySelector(`[data-src="${f.id}"]`).textContent = r.src==='override' ? `(override; criteria give ${fmt(r.auto)})` : r.src==='auto' ? '(from selected criteria)' : '(select criteria or enter values)';
+  card.querySelectorAll('tr.rrow td').forEach(td=>td.classList.toggle('hit', r.value!==null && Math.abs(f.ratings[+td.dataset.rate]-r.value)<1e-9));
+  let w = f.warn? f.warn(st):'';
+  if(f.id==='slope'){ const H=slopeHeight(S); if(H!==null && r.auto!==null){ if(H<50) w=`Overall slope height ${fmt(H)} m < 50 m → minimum rating 2 applied.`; else if(H<=100) w=`Overall slope height ${fmt(H)} m (50–100 m) → minimum rating 1 applied.`; } }
+  if(f.id==='precip' && st.flags.intense && r.auto!==null) w='Intensity adjustment of −1 applied.';
+  if(f.id==='intact' && st.flags.frozen && r.auto!==null) w='Permafrost upgrade applied (+1 category).';
+  if(f.override && r.value!==null){ if(f.id==='perf'){ if(r.value<=-15) w='⚠ Very Poor → WHC V override'; else if(r.value<=-7.5) w='⚠ Poor → at least WHC IV'; } else { if(r.value<=-20) w='⚠ Very High → WHC V override'; else if(r.value<=-10) w='⚠ High → at least WHC IV'; } }
+  card.querySelector(`[data-warn="${f.id}"]`).textContent=w;
+  if(f.helper) refreshHelper(f);
+}
+function refreshHelper(f){
+  const h=S.f[f.id].helper, out=document.querySelector(`[data-hout="${f.id}"]`); if(!out) return;
+  const n=v=>v!==undefined&&v!==''&&isFinite(v)?+v:null;
+  if(f.helper==='volmass'){ const b=n(h.bcm), bf=n(h.bf??1.35), rho=n(h.rho??2.0);
+    if(b&&bf&&rho){ const v=b*bf, m=v*rho; h._v=v; h._m=m; out.innerHTML=`Loose volume = ${b.toExponential(3)} × ${bf} = <b>${v.toExponential(3)} m³</b>; Mass = ${v.toExponential(3)} × ${rho} = <b>${m.toExponential(3)} t</b>`; }
+    else { h._v=h._m=null; out.textContent='Enter bank volume, bulking factor and loose density.'; } }
+  if(f.helper==='load'){ const t=n(h.tpd), c=n(h.crest), rho=n(h.rho??2.0), a=n(h.adv), l=n(h.lift); let s=[];
+    h._m=h._v=h._c=null;
+    if(t&&c){ h._m=t/c; s.push(`Mass loading rate = ${t} ÷ ${c} = <b>${fmt(h._m)} t/d/m</b>`); if(rho){ h._v=t/rho/c; s.push(`Volumetric loading rate = ${t} ÷ ${rho} ÷ ${c} = <b>${fmt(h._v)} m³/d/m</b>`);} }
+    if(a&&l){ h._c=a*l; s.push(`Crest advancement rate = ${a} × ${l} = <b>${fmt(h._c)} m²/d</b>`); }
+    out.innerHTML = s.length? s.join('<br>') : 'Enter the daily mass and crest length, and/or the crest advance and lift height.'; }
+}
+function renderGroupPanel(G,i){
+  return `<section class="panel" id="p-${G.id}">
+   <div class="ph"><h2>${i+1}. ${esc(G.name)}</h2><div class="meta">${G.table} · maximum ${G.max} points · contributes to ${G.index==='EGI'?'Engineering Geology Index (EGI)':'Design and Performance Index (DPI)'}</div></div>
+   <p class="lead">${G.intro}</p>
+   ${G.factors.map(renderFactor).join('')}
+   <div class="card noprint" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+     <div><b>${esc(G.name)} rating:</b> <span data-gsum="${G.id}" style="font-size:18px;font-weight:700">—</span> / ${G.max} <span class="note" data-gdesc="${G.id}"></span></div>
+     <div class="btnrow"><button class="btn" data-tab="${TABS[i].id}">← Previous</button><button class="btn primary" data-tab="${TABS[i+2].id}">Next →</button></div>
+   </div>
+  </section>`;
+}
+function refreshGroupSums(){
+  const R=compute();
+  GROUPS.forEach(G=>{ const el=document.querySelector(`[data-gsum="${G.id}"]`); if(!el) return; el.textContent=fmt(R.g[G.id].sum); const d=groupDesc(G,R.g[G.id].sum,R); const dd=document.querySelector(`[data-gdesc="${G.id}"]`); dd.textContent = (R.g[G.id].n<R.g[G.id].of?`(${R.g[G.id].of-R.g[G.id].n} factor(s) not yet rated) `:'') + (d&&R.g[G.id].n?`· ${d.label}`:''); });
+}
+function renderOverview(){
+  return `<section class="panel" id="p-overview">
+   <div class="ph"><h2>Overview</h2><div class="meta">22 factors · 7 groups · 2 indices · WSR 0–100 · 5 hazard classes</div></div>
+   <div class="grid2">
+    <div class="card">
+      <h3>What the WSRHC does</h3>
+      <p style="margin-top:0">The Waste Dump and Stockpile Stability Rating and Hazard Classification system scores 22 factors that influence stability, grouped into seven groups. The group ratings add up to the <b>Waste Dump and Stockpile Stability Rating (WSR)</b>, from 0 to 100; <b>higher is more stable</b>. The WSR assigns one of five <b>Hazard Classes (WHC I–V)</b>, which suggests the level of investigation, design and construction effort required.</p>
+      <p class="note" style="margin-bottom:0">EGI = Regional Setting + Foundation Conditions + Material Quality (site factors the designer has little control over). DPI = Geometry & Mass + Stability Analysis + Construction + Performance (factors the designer can partly control). Each index has a maximum of 50.</p>
+    </div>
+    <div class="card">
+      <h3>How to use this module</h3>
+      <ol class="steps">
+        <li>Enter the project details below (optional; they appear on the printed report).</li>
+        <li>Work through tabs <b>1–7</b>. For each factor, <b>click a cell</b> that matches your conditions or <b>type a value</b>. The matching class is highlighted automatically.</li>
+        <li>Where several criteria are given, or you are between two classes, the module <b>averages</b> them. You can type an intermediate value in <b>Override</b>.</li>
+        <li>Open <b>Results</b> for the WSR, EGI, DPI, hazard class, Figure 3.4 chart and suggested level of effort. Save scenarios to compare phases or design options.</li>
+      </ol>
+    </div>
+   </div>
+   <div class="card">
+     <h3>Project details</h3>
+     <div class="form">
+      <label>Project / mine<input data-proj="name" value="${esc(S.project.name)}"></label>
+      <label>Waste dump / stockpile<input data-proj="dump" value="${esc(S.project.dump)}"></label>
+      <label>Phase / configuration<input data-proj="phase" value="${esc(S.project.phase)}" placeholder="e.g. Ultimate, Phase 2, Closure"></label>
+      <label>Assessed by<input data-proj="by" value="${esc(S.project.by)}"></label>
+      <label>Date<input type="date" data-proj="date" value="${esc(S.project.date)}"></label>
+     </div>
+     <div class="btnrow" style="margin-top:14px">
+      <button class="btn primary" data-tab="regional">Start rating →</button>
+      <button class="btn" id="bExample">Load worked example</button>
+      <button class="btn" id="bExport">Export (.json)</button>
+      <button class="btn" id="bImport">Import (.json)</button>
+      <button class="btn" id="bReset">Reset all</button>
+     </div>
+     <p class="note" style="margin-bottom:0">Your inputs are saved automatically in this browser. Use Export / Import to keep or share an assessment file.</p>
+   </div>
+   <div class="card">
+     <h3>Key rules of the method</h3>
+     <ul style="margin:6px 0;padding-left:20px">
+      <li><b>Least favourable conditions:</b> choose ratings for the least favourable conditions over the life of the structure, or rate each development phase separately and compare them as scenarios.</li>
+      <li><b>Averaging:</b> where more than one criterion is given for a factor, or you cannot decide between two classes, use an average or intermediate rating. In this module, a value lying exactly on a class boundary receives the average of the two adjacent ratings.</li>
+      <li><b>Unknowns:</b> unevaluated undrained failure or liquefaction potential defaults to −5; unknown chemical reactivity is 0; uninvestigated bedrock defaults to Type B; no stability analysis gives 2 (static) and 1 (dynamic); no performance history is Fair (0).</li>
+      <li><b>Hazard-class overrides:</b> Very High undrained failure or liquefaction potential, or Very Poor performance → WHC V regardless of WSR. High potential or Poor performance → WHC IV (WHC V if WSR ≤ 20).</li>
+     </ul>
+   </div>
+   <div class="card">
+     <h3>Figures</h3>
+     <div class="figgrid">${Object.entries(FIGS).map(([id,F])=>`<button class="figbtn" data-fig="${id}"><div class="t">${esc(F.t)}</div><div class="d">${esc(F.d)}</div></button>`).join('')}</div>
+   </div>
+   <div class="card">
+     <h3>Figure 3.1 – Structure of the WSRHC system <span class="note" style="font-weight:400">(live values; click a group to open it)</span></h3>
+     <div id="ovfig"></div>
+   </div>
+  </section>`;
+}
+function renderOverviewFig(){ const el=document.getElementById('ovfig'); if(el) el.innerHTML=fig31(compute()); }
+
+function renderResultsShell(){
+  return `<section class="panel" id="p-results"><div id="resbody"></div></section>`;
+}
+const SCOL=['#c2410c','#7c3aed','#0f766e','#be185d','#4d7c0f','#a16207','#475569','#0369a1'];
+function renderResults(){
+  const R=compute(); const P=S.project;
+  const W=WHC[R.final], k=W.k;
+  const proj=[P.name&&`<b>Project:</b> ${esc(P.name)}`,P.dump&&`<b>Structure:</b> ${esc(P.dump)}`,P.phase&&`<b>Phase:</b> ${esc(P.phase)}`,P.by&&`<b>Assessed by:</b> ${esc(P.by)}`,P.date&&`<b>Date:</b> ${esc(P.date)}`].filter(Boolean).join(' &nbsp;·&nbsp; ');
+  let warn='';
+  if(R.unrated.length) warn+=`<div class="callout warn"><b>${R.unrated.length} of 22 factors not rated</b> (counted as 0): ${R.unrated.map(f=>`<button class="btn link" data-goto="${f.id}">${esc(f.name)}</button>`).join(', ')}. Results are provisional.</div>`;
+  if(R.ov.length) warn+=`<div class="callout bad"><b>Hazard-class override applied.</b> WSR alone gives WHC ${WHC[R.base].n}; final classification is <b>WHC ${W.n}</b>.<ul style="margin:6px 0 0;padding-left:18px">${R.ov.map(o=>`<li>${esc(o.why)}</li>`).join('')}</ul></div>`;
+  const rows=GROUPS.map(G=>{ const s=R.g[G.id].sum; const d=R.g[G.id].n?groupDesc(G,s,R):null; const pct=Math.max(0,Math.min(100,s/G.max*100));
+    return `<tr><td>${G.index}</td><td><button class="btn link" data-tab="${G.id}">${esc(G.name)}</button></td><td class="num">${fmt(s)}</td><td class="num">${G.max}</td><td><div class="bar"><span style="width:${pct}%;background:${d?KDARK[d.k]:'#ccc'}"></span></div></td><td>${d?`<span class="pill" style="background:${KHEX[d.k]}">${esc(d.label)}</span>`:'<span class="note">not rated</span>'}</td></tr>`; }).join('');
+  const pts=S.scenarios.map((sc,i)=>({dpi:sc.DPI,egi:sc.EGI,label:sc.name,color:SCOL[i%SCOL.length]}));
+  pts.push({dpi:R.DPI,egi:R.EGI,label:'Current',main:true,color:'#1f4e79'});
+  const scen = S.scenarios.length ? `<table class="scen" style="width:100%;border-collapse:collapse;margin-top:8px"><tr><th style="text-align:left">Scenario</th><th>EGI</th><th>DPI</th><th>WSR</th><th>WHC</th><th></th></tr>${S.scenarios.map((sc,i)=>`<tr><td><span class="dot" style="background:${SCOL[i%SCOL.length]}"></span>${esc(sc.name)}</td><td style="text-align:center">${fmt(sc.EGI)}</td><td style="text-align:center">${fmt(sc.DPI)}</td><td style="text-align:center"><b>${fmt(sc.WSR)}</b></td><td style="text-align:center"><span class="pill" style="background:${KHEX[WHC[sc.WHC].k]}">${WHC[sc.WHC].n}</span></td><td class="noprint" style="text-align:right"><button class="btn small" data-loadsc="${i}" title="Load inputs of this scenario">Load</button> <button class="btn small" data-delsc="${i}">✕</button></td></tr>`).join('')}</table>` : '<p class="note">No saved scenarios yet. Save the current assessment to compare development phases or design alternatives on the chart.</p>';
+  const fac=GROUPS.map(G=>G.factors.map((f,j)=>{ const c=R.fr[f.id]; const kk=factorK(f,c.value);
+     return `<tr>${j===0?`<td rowspan="${G.factors.length}" style="vertical-align:top"><b>${esc(G.name)}</b><br><span class="note">${G.table}</span></td>`:''}<td>${esc(f.name)}</td><td class="num"><b>${fmt(c.value)}</b></td><td class="num">${f.max>0?fmt(f.max):'0'}</td><td>${c.value!==null&&f.classes&&f.classes[kk]?`<span class="pill" style="background:${KHEX[kk]}">${esc(f.classes[kk])}</span>`:(c.value!==null?`<span class="pill" style="background:${KHEX[kk]}">class ${kk+1} of 5</span>`:'<span class="note">not rated</span>')}</td><td class="note">${c.src==='override'?'override':c.src==='auto'?'criteria':'—'}</td></tr>`; }).join('')).join('');
+  const L=LOE[R.final];
+  document.getElementById('resbody').innerHTML = `
+   <div class="ph"><h2>Results</h2><div class="btnrow noprint"><button class="btn" id="bPrint">Print / save as PDF</button><button class="btn" id="bExport2">Export (.json)</button></div></div>
+   ${proj?`<p style="margin:-6px 0 14px">${proj}</p>`:''}
+   ${warn}
+   <div class="tiles">
+    <div class="tile"><div class="k">Engineering Geology Index</div><div class="v">${fmt(R.EGI)}</div><div class="s">EGI, out of 50</div></div>
+    <div class="tile"><div class="k">Design &amp; Performance Index</div><div class="v">${fmt(R.DPI)}</div><div class="s">DPI, out of 50</div></div>
+    <div class="tile"><div class="k">Stability Rating</div><div class="v">${fmt(R.WSR)}</div><div class="s">WSR = EGI + DPI, out of 100</div></div>
+    <div class="tile whc" style="background:${KHEX[k]};border-color:${KDARK[k]}"><div class="k" style="color:#1d2733">Hazard Class</div><div class="v">WHC ${W.n}</div><div class="s" style="color:#1d2733"><b>${W.hz}</b>${R.ov.length?' (override)':''}</div></div>
+   </div>
+   <div class="grid2">
+    <div class="card">
+      <h3>Rating summary <span class="note" style="font-weight:400">(after Table 3.10)</span></h3>
+      <table class="sumtbl"><thead><tr><th>Index</th><th>Group</th><th style="text-align:right">Rating</th><th style="text-align:right">Max</th><th></th><th>Description</th></tr></thead>
+      <tbody>${rows}
+       <tr class="tot"><td colspan="2">Engineering Geology Index (EGI)</td><td class="num">${fmt(R.EGI)}</td><td class="num">50</td><td colspan="2"></td></tr>
+       <tr class="tot" style="border-top:0"><td colspan="2">Design and Performance Index (DPI)</td><td class="num">${fmt(R.DPI)}</td><td class="num">50</td><td colspan="2"></td></tr>
+       <tr class="tot"><td colspan="2">Stability Rating (WSR)</td><td class="num">${fmt(R.WSR)}</td><td class="num">100</td><td colspan="2"><span class="pill" style="background:${KHEX[k]}">WHC ${W.n} – ${W.hz}</span></td></tr></tbody></table>
+      <p class="note" style="margin-bottom:0">Group descriptions follow Table 3.10 (nearest benchmark). Table 3.10 gives no descriptors for Stability Analysis, so a Very Poor–Very Good scale is used here; Performance uses the Table 3.9 classes.</p>
+      <h3 style="margin-top:18px">Hazard classes <span class="note" style="font-weight:400">(Table 3.11)</span></h3>
+      <table class="sumtbl whc-tbl"><thead><tr><th>WSR</th><th>WHC</th><th>Instability hazard</th></tr></thead><tbody>
+      ${[1,2,3,4,5].map(c=>`<tr class="${c===R.final?'cur':''}"><td style="background:${KHEX[WHC[c].k]}">${WHC[c].range}</td><td style="background:${KHEX[WHC[c].k]}">${WHC[c].n}</td><td style="background:${KHEX[WHC[c].k]}">${WHC[c].hz}</td></tr>`).join('')}</tbody></table>
+    </div>
+    <div class="card">
+      <h3>Figure 3.4 – WSR and hazard class chart</h3>
+      <div style="display:flex;justify-content:center">${fig34(pts)}</div>
+      <div class="btnrow noprint" style="margin-top:8px"><input id="scname" placeholder="Scenario name (e.g. Phase 2)" style="font:inherit;font-size:14px;padding:6px 8px;border:1px solid #c9d2db;border-radius:6px;flex:1;min-width:160px"><button class="btn primary" id="bSaveSc">Save as scenario</button></div>
+      ${scen}
+    </div>
+   </div>
+   <div class="card">
+     <h3>Suggested level of effort for WHC ${W.n} – ${W.hz} <span class="note" style="font-weight:400">(after Table 3.12)</span></h3>
+     <div class="loe">
+       <div><h4>Investigation and characterisation</h4><ul>${L.inv.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+       <div><h4>Analysis and design</h4><ul>${L.des.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+       <div><h4>Construction and operation</h4><ul>${L.con.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+     </div>
+     <details class="noprint" style="margin-top:10px"><summary style="cursor:pointer;color:var(--accent2);font-weight:600;font-size:13.5px">Compare all hazard classes</summary>
+      <div style="overflow-x:auto"><table class="sumtbl" style="min-width:820px;margin-top:8px"><thead><tr><th>WHC</th><th>Investigation and characterisation</th><th>Analysis and design</th><th>Construction and operation</th></tr></thead><tbody>
+      ${[1,2,3,4,5].map(c=>`<tr style="vertical-align:top"><td style="background:${KHEX[WHC[c].k]};white-space:nowrap"><b>${WHC[c].n}</b><br>${WHC[c].hz}</td>${['inv','des','con'].map(key=>`<td><ul style="margin:0;padding-left:16px;font-size:13px">${LOE[c][key].map(x=>`<li>${x}</li>`).join('')}</ul></td>`).join('')}</tr>`).join('')}
+      </tbody></table></div></details>
+   </div>
+   <div class="card">
+     <h3>Factor ratings</h3>
+     <div style="overflow-x:auto"><table class="sumtbl" style="min-width:640px"><thead><tr><th>Group</th><th>Factor</th><th style="text-align:right">Rating</th><th style="text-align:right">Max</th><th>Class</th><th>Source</th></tr></thead><tbody>${fac}</tbody></table></div>
+   </div>
+   <div class="card">
+     <h3>Interpretation notes</h3>
+     <ul style="margin:6px 0;padding-left:20px;font-size:14px">
+      <li>The WSR is a relative index of stability, not a risk assessment: it does not account for exposure or the consequences of failure.</li>
+      <li>Compare the EGI and DPI to see whether the hazard is driven by site conditions (EGI) or by the design and construction choices (DPI), which the designer can change.</li>
+      <li>Ratings for each development phase can be saved as scenarios to identify the critical phase.</li>
+     </ul>
+   </div>
+   <div class="printonly note">WSRHC – Hawley M. and Cunning J., (2017), “Guidelines for Mine Waste Dump and Stockpile Design”, CRC Press, 368 pages. <span style="color:#1a5fb4">Module: Yashar Pourrahimian</span></div>
+  `;
+}
+
+/* =====================================================================
+   EVENTS
+   ===================================================================== */
+function changed(f){ if(f) refreshFactor(f); if(f && f.id==='height') refreshFactor(FBYID.slope); refreshGroupSums(); renderTabbar(); save(); if(S.tab==='results') renderResults(); }
+const panels=document.getElementById('panels');
+panels.addEventListener('click',e=>{
+  const t=e.target;
+  const cell=t.closest('td.cell');
+  if(cell && !cell.classList.contains('na')){
+    const f=FBYID[cell.dataset.f], st=S.f[f.id], cid=cell.dataset.c, k=+cell.dataset.k;
+    const c=f.criteria.find(x=>x.id===cid);
+    const cur=st.sel[cid]||[];
+    if(cur.length===1 && cur[0]===k){ delete st.sel[cid]; } else st.sel[cid]=[k];
+    if(c.type==='num'){ delete st.vals[cid]; const inp=document.querySelector(`input[data-f="${f.id}"][data-c="${cid}"]`); if(inp) inp.value=''; }
+    changed(f); return;
+  }
+  const rr=t.closest('td[data-rate]');
+  if(rr){ const f=FBYID[rr.dataset.f]; S.f[f.id].manual=f.ratings[+rr.dataset.rate]; document.querySelector(`[data-ovr="${f.id}"]`).value=S.f[f.id].manual; changed(f); return; }
+  if(t.dataset.quick!==undefined){ const f=FBYID[t.dataset.f], q=f.quick[+t.dataset.quick], st=S.f[f.id];
+    Object.entries(q.set).forEach(([cid,v])=>st.sel[cid]=v.slice());
+    (q.clearNums||[]).forEach(cid=>{ delete st.vals[cid]; delete st.sel[cid]; const inp=document.querySelector(`input[data-f="${f.id}"][data-c="${cid}"]`); if(inp) inp.value=''; });
+    changed(f); return; }
+  if(t.dataset.clear){ const f=FBYID[t.dataset.clear]; S.f[f.id]={sel:{},vals:{},flags:{},manual:null,helper:{}}; const card=document.getElementById('fc-'+f.id); card.outerHTML=renderFactor(f); refreshFactor(f); changed(f); return; }
+  if(t.dataset.happly){ const f=FBYID[t.dataset.happly], st=S.f[f.id], h=st.helper;
+    const setv=(cid,v)=>{ if(v==null||!isFinite(v)) return; v=+v.toPrecision(6); st.vals[cid]=v; const c=f.criteria.find(x=>x.id===cid); st.sel[cid]=matchNum(c,v); const inp=document.querySelector(`input[data-f="${f.id}"][data-c="${cid}"]`); if(inp) inp.value=v; };
+    if(f.helper==='volmass'){ setv('vol',h._v); setv('mass',h._m); }
+    if(f.helper==='load'){ setv('mlr',h._m); setv('vlr',h._v); setv('car',h._c); }
+    changed(f); return; }
+  if(t.dataset.fig){ openFig(t.dataset.fig); return; }
+  const tb=t.closest('[data-tab]'); if(tb && (tb.tagName==='BUTTON'||tb.classList.contains('gbox'))){ showTab(tb.dataset.tab); return; }
+  const gb=t.closest('.gbox'); if(gb){ showTab(gb.dataset.tab); return; }
+  if(t.dataset.goto){ const f=FBYID[t.dataset.goto]; showTab(f.group); setTimeout(()=>document.getElementById('fc-'+f.id).scrollIntoView({behavior:'smooth',block:'start'}),30); return; }
+  if(t.id==='bExample'){ if(confirm('Load the worked example? Current inputs will be replaced (saved scenarios are kept).')) loadExample(); return; }
+  if(t.id==='bReset'){ if(confirm('Clear all inputs, project details and saved scenarios?')){ S=blankState(); S.tab='overview'; save(); build(); } return; }
+  if(t.id==='bExport'||t.id==='bExport2'){ exportJSON(); return; }
+  if(t.id==='bImport'){ document.getElementById('importfile').click(); return; }
+  if(t.id==='bPrint'){ window.print(); return; }
+  if(t.id==='bSaveSc'){ const R=compute(); const nm=(document.getElementById('scname').value||'').trim()||`Scenario ${S.scenarios.length+1}`;
+    S.scenarios.push({name:nm, EGI:R.EGI, DPI:R.DPI, WSR:R.WSR, WHC:R.final, inputs:JSON.parse(JSON.stringify(S.f))}); save(); renderResults(); return; }
+  if(t.dataset.delsc!==undefined){ S.scenarios.splice(+t.dataset.delsc,1); save(); renderResults(); return; }
+  if(t.dataset.loadsc!==undefined){ const sc=S.scenarios[+t.dataset.loadsc]; if(sc.inputs && confirm(`Load the inputs of “${sc.name}”? Current inputs will be replaced.`)){ S.f=JSON.parse(JSON.stringify(sc.inputs)); save(); build(); showTab('results'); } return; }
+});
+panels.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ') && e.target.matches('td.cell[tabindex]')){ e.preventDefault(); e.target.click(); } });
+panels.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.c && t.dataset.f){ const f=FBYID[t.dataset.f], st=S.f[f.id], c=f.criteria.find(x=>x.id===t.dataset.c);
+    const v=t.value.trim(); if(v===''||!isFinite(+v)){ delete st.vals[c.id]; delete st.sel[c.id]; } else { st.vals[c.id]=+v; st.sel[c.id]=matchNum(c,+v); }
+    changed(f); return; }
+  if(t.dataset.ovr){ const f=FBYID[t.dataset.ovr]; const v=t.value.trim(); S.f[f.id].manual = (v===''||!isFinite(+v)) ? null : Math.max(Math.min(...f.ratings),Math.min(Math.max(...f.ratings),+v)); changed(f); return; }
+  if(t.dataset.flag && t.type==='number'){ const f=FBYID[t.dataset.f]; S.f[f.id].flags[t.dataset.flag]=t.value===''?'':+t.value; changed(f); return; }
+  if(t.dataset.h){ const f=FBYID[t.dataset.f]; S.f[f.id].helper[t.dataset.h]=t.value; refreshHelper(f); save(); return; }
+  if(t.dataset.proj){ S.project[t.dataset.proj]=t.value; save(); return; }
+});
+panels.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.flag && t.type==='checkbox'){ const f=FBYID[t.dataset.f]; S.f[f.id].flags[t.dataset.flag]=t.checked; changed(f); return; }
+  if(t.dataset.flag && t.tagName==='SELECT'){ const f=FBYID[t.dataset.f]; S.f[f.id].flags[t.dataset.flag]=+t.value; changed(f); return; }
+});
+document.getElementById('importfile').addEventListener('change',e=>{
+  const file=e.target.files[0]; if(!file) return; const rd=new FileReader();
+  rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o.f) throw new Error('not a WSRHC file'); mergeState(o); S.tab='overview'; save(); build(); alert('Assessment imported.'); }catch(err){ alert('Could not import this file: '+err.message); } };
+  rd.readAsText(file); e.target.value='';
+});
+function exportJSON(){
+  const R=compute(); const o=JSON.parse(JSON.stringify(S)); o._summary={EGI:R.EGI,DPI:R.DPI,WSR:R.WSR,WHC:WHC[R.final].n,hazard:WHC[R.final].hz}; o._format='WSRHC module v1';
+  const blob=new Blob([JSON.stringify(o,null,1)],{type:'application/json'}); const a=document.createElement('a');
+  const nm=(S.project.dump||S.project.name||'assessment').replace(/[^\w\-]+/g,'_');
+  a.href=URL.createObjectURL(blob); a.download=`WSRHC_${nm}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500);
+}
+function loadExample(){
+  const keep=S.scenarios; S=blankState(); S.scenarios=keep;
+  S.project={name:'Example Mine (hypothetical)', dump:'North Waste Dump', phase:'Ultimate configuration', by:'Student', date:new Date().toISOString().slice(0,10)};
+  const v=(fid,cid,val)=>{ const f=FBYID[fid], c=f.criteria.find(x=>x.id===cid); S.f[fid].vals[cid]=val; S.f[fid].sel[cid]=matchNum(c,val); };
+  const s=(fid,cid,k)=>{ S.f[fid].sel[cid]=[k]; };
+  v('seis','pga475',0.15); v('precip','tot',800); S.f.precip.flags.intense=true;
+  v('fslope','ang',18); s('fshape','sec',2); s('fshape','plan',3); s('obtype','d',3); v('obthick','t',2);
+  s('undr','d',3); s('fliq','d',4); s('bedrock','comp',2); v('bedrock','gsi',50); s('bedrock','struct',2); s('gw','d',2);
+  v('grad','fines',12); v('grad','coarse',30); s('grad','plast',2); s('intact','str',3); s('intact','dur',2); s('mliq','d',4); s('chem','ard',2); s('chem','ppt',2);
+  v('height','oh',180); v('height','vt',120); v('height','lh',60); v('slope','ang',27); v('volmass','mass',1.5e8);
+  v('stat','fos',1.35); v('dyn','fos',1.08);
+  s('method','d',3); v('load','mlr',60);
+  s('perf','d',2);
+  S.tab='overview'; save(); build(); showTab('results');
+}
+function build(){
+  panels.innerHTML = renderOverview() + GROUPS.map(renderGroupPanel).join('') + renderResultsShell();
+  ALLF.forEach(refreshFactor); refreshGroupSums();
+  showTab(S.tab||'overview');
+}
+load(); build();
+</script>
+</body>
+</html>
