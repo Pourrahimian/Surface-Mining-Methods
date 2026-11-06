@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dragline Simple Side Casting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: fixed control rail on the left, live drawing + worked solution on the right */
+  --bg:#eef0f2; --panel:#ffffff; --ink:#1b2430; --muted:#5a6575; --line:#d4d9e0;
+  --accent:#1c5ea8; --hl:#d4461a; --soft:#e7eef8;
+  --ok:#2c7a4b; --warn:#a86a10; --bad:#b4232a;
+  --ob:#bfae92; --ob2:#d6ccba; --obline:#8b7a5f; --coal:#22252a; --spoil:#c98a3e; --spoil2:#e0bf90; --spoilline:#8f5c1e; --floor:#a3a9b0;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11151b; --panel:#191f28; --ink:#e2e7ee; --muted:#97a2b2; --line:#2b3441;
+    --accent:#6ea8ec; --hl:#ff8752; --soft:#1f2b3b;
+    --ok:#5cc08a; --warn:#e2a64a; --bad:#ff6b6b;
+    --ob:#7d6f58; --ob2:#5c5444; --obline:#a8977a; --coal:#050607; --spoil:#a96f2e; --spoil2:#6b5032; --spoilline:#d79b52; --floor:#454c55;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11151b; --panel:#191f28; --ink:#e2e7ee; --muted:#97a2b2; --line:#2b3441;
+  --accent:#6ea8ec; --hl:#ff8752; --soft:#1f2b3b;
+  --ok:#5cc08a; --warn:#e2a64a; --bad:#ff6b6b;
+  --ob:#7d6f58; --ob2:#5c5444; --obline:#a8977a; --coal:#050607; --spoil:#a96f2e; --spoil2:#6b5032; --spoilline:#d79b52; --floor:#454c55;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:350px minmax(0,1fr);min-height:100%}
+.rail{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--panel);border-right:1px solid var(--line);padding:18px 18px 28px;display:flex;flex-direction:column;gap:16px}
+.main{padding:20px 24px 40px;display:flex;flex-direction:column;gap:18px;min-width:0}
+
+.brand .course{font:600 12px/1.2 var(--mono);letter-spacing:.06em;color:var(--accent);text-transform:uppercase}
+.brand h1{font-size:26px;line-height:1.1}
+.brand .author{font:500 14px/1.3 var(--body);color:var(--accent);margin-top:4px}
+.brand p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);padding:6px 11px;border-radius:6px;cursor:pointer;font-size:13.5px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08);color:#fff}
+
+fieldset{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column;gap:4px}
+legend{font:600 13px/1 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 0 8px;border-bottom:1px solid var(--line);width:100%;margin-bottom:6px}
+.prm{padding:6px 8px;border-radius:7px;display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;transition:background .15s}
+.prm:hover,.prm.active{background:var(--soft)}
+.prm label{font-size:13.5px;display:flex;gap:6px;align-items:baseline;min-width:0}
+.prm .sym{font:500 13.5px var(--mono);color:var(--accent);min-width:2.6em}
+.prm .val{display:flex;align-items:center;gap:4px}
+.prm input[type=number]{width:78px;padding:2px 5px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font:500 13.5px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.prm .unit{font-size:12px;color:var(--muted);min-width:3.6em}
+.prm input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:2px 0 0;cursor:pointer}
+.prm .note{grid-column:1/-1;font-size:12px;color:var(--muted);line-height:1.35}
+.selrow{display:flex;flex-direction:column;gap:4px;padding:6px 8px}
+.selrow select{width:100%;padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:13.5px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.card > header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.card > header h2{font-size:19px}
+.card > header .sub{color:var(--muted);font-size:13px}
+.toggles{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.toggles label{display:flex;gap:5px;align-items:center;cursor:pointer}
+.toggles input{accent-color:var(--accent)}
+
+.figwrap{overflow-x:auto;padding:4px 8px 0}
+#fig{display:block;width:100%;min-width:720px;height:auto}
+.figfoot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 16px 12px;font-size:12.5px;color:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap}
+.legend span{display:flex;gap:6px;align-items:center}
+.sw{width:14px;height:10px;border-radius:2px;display:inline-block;border:1px solid rgba(0,0,0,.25)}
+
+.alerts{display:flex;flex-direction:column;gap:6px;padding:0 16px 12px}
+.alert{font-size:13.5px;padding:7px 10px;border-radius:6px;border-left:4px solid;background:var(--bg)}
+.alert.warn{border-color:var(--warn)} .alert.bad{border-color:var(--bad)} .alert.info{border-color:var(--accent)}
+.alert b{font-weight:600}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 12px;cursor:default;transition:border-color .15s, box-shadow .15s}
+.tile:hover{border-color:var(--hl)}
+.tile .k{font:500 12.5px var(--mono);color:var(--muted)}
+.tile .k b{color:var(--accent);font-weight:600}
+.tile .v{font:600 22px/1.15 var(--display);font-variant-numeric:tabular-nums;margin-top:2px}
+.tile .v small{font:400 13px var(--body);color:var(--muted);margin-left:3px}
+.tile .d{font-size:12px;color:var(--muted)}
+.tile.geo{border-top:3px solid var(--accent)} .tile.prod{border-top:3px solid var(--spoil)}
+@keyframes bump{from{background:var(--soft)}to{background:var(--panel)}}
+.tile.bump{animation:bump .6s ease-out}
+
+.duo{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px}
+.sensbody{padding:10px 14px 14px}
+.sensctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted);margin-bottom:6px}
+.sensctl select{padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:13px}
+#sens{width:100%;height:auto;display:block}
+.sensnote{font-size:13px;color:var(--muted);margin:4px 0 0}
+
+.tries{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.try{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.try b{font-weight:600;font-size:14px}
+.try span{grid-column:1;font-size:12.5px;color:var(--muted)}
+.try button{grid-row:1/3;grid-column:2}
+#tryMsg{font-size:13px;color:var(--accent);min-height:1.4em;margin:2px 2px 0}
+
+.sol{padding:4px 0 8px}
+.part{padding:8px 16px 4px}
+.part h3{font-size:16px;letter-spacing:.02em;color:var(--muted);text-transform:uppercase;padding:10px 0 6px}
+.step{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:4px 14px;padding:10px 8px;border-top:1px solid var(--line);border-radius:6px;transition:background .15s}
+.step:hover{background:var(--soft)}
+.step .eq{font:500 13px var(--mono);color:var(--accent);padding-top:2px}
+.step .st{font-weight:600}
+.step .why{font-size:13.5px;color:var(--muted);max-width:68ch}
+.math{font:15px/2 var(--mono);font-variant-numeric:tabular-nums;overflow-x:auto;white-space:nowrap}
+.math.sub{color:var(--muted)}
+.math .op{color:var(--muted)}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.25;margin:0 2px}
+.frac > span:first-child{border-bottom:1px solid currentColor;padding:0 3px}
+.frac > span:last-child{padding:0 3px}
+.res{font:600 16px/1.2 var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;padding-top:2px}
+.res small{display:block;font:400 12px var(--body);color:var(--muted)}
+.res.ok{color:var(--ok)}
+.pv{border-radius:3px;padding:0 2px;color:var(--ink);box-shadow:inset 0 -1.5px 0 var(--accent);transition:background .12s}
+.pv.r{box-shadow:inset 0 -1.5px 0 var(--spoil)}
+.notes{padding:14px 18px;font-size:13.5px;color:var(--muted)}
+.notes ul{margin:6px 0 0;padding-left:18px;max-width:90ch}
+.notes li{margin:3px 0}
+
+/* SVG */
+.dim{color:var(--accent)}
+.dim line,.dim path{stroke:currentColor}
+.dim polygon,.dim text{fill:currentColor}
+.dim text{font:500 15px var(--mono);paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+.ext{stroke:var(--muted);stroke-dasharray:3 4;stroke-width:1;opacity:.75}
+.lbl{font:500 13px var(--body);fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3.5px;stroke-linejoin:round}
+.lbl.big{font:600 15px var(--mono)}
+.lbl.mut{fill:var(--muted)}
+.region{transition:stroke-width .1s}
+.machine{stroke:var(--ink);stroke-width:1.4;fill:var(--panel)}
+.rope{stroke:var(--muted);stroke-width:1;fill:none}
+.boom{stroke:var(--ink);stroke-width:1.2;fill:none}
+#constr{opacity:0;transition:opacity .2s}
+#constr.on{opacity:1}
+.layer-off{display:none}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:1100px){.duo{grid-template-columns:1fr}}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .main{padding:16px}
+}
+</style>
+<style id="hlstyle"></style>
+</head>
+<body>
+<div class="app">
+<aside class="rail" aria-label="Input parameters">
+  <div class="brand">
+    <h1>Dragline simple side casting</h1>
+    <div class="author">Yashar Pourrahimian</div>
+    <p>Drag any slider or type a value. The range diagram, every equation and every result update as you move it. Hover a parameter to see where it sits on the drawing.</p>
+  </div>
+  <div class="btnrow">
+    <button class="btn primary" id="btnEx2" type="button">Load Example 2</button>
+  </div>
+  <fieldset id="fsGeo"><legend>Pit and spoil geometry</legend></fieldset>
+  <fieldset id="fsMach"><legend>Dragline position</legend></fieldset>
+  <fieldset id="fsProd"><legend>Production target</legend></fieldset>
+  <fieldset id="fsOps"><legend>Dragline operation</legend></fieldset>
+</aside>
+
+<main class="main">
+  <section class="card" aria-labelledby="figTitle">
+    <header>
+      <div>
+        <h2 id="figTitle">Range diagram</h2>
+        <div class="sub">Cross-section through the pit, drawn to scale (1 m strip length)</div>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="tgDims" checked> Dimensions</label>
+        <label><input type="checkbox" id="tgLbl" checked> Labels</label>
+        <label><input type="checkbox" id="tgDl" checked> Dragline</label>
+        <label><input type="checkbox" id="tgPrev" checked> Previous spoil</label>
+        <label><input type="checkbox" id="tgCon"> Eq. (4) construction</label>
+      </div>
+    </header>
+    <div class="figwrap"><svg id="fig" viewBox="0 0 1100 600" role="img" aria-label="Range diagram for simple side casting"></svg></div>
+    <div class="alerts" id="alerts"></div>
+    <div class="figfoot">
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ob)"></i>Overburden, this cut</span>
+        <span><i class="sw" style="background:var(--coal)"></i>Coal seam</span>
+        <span><i class="sw" style="background:var(--spoil)"></i>Spoil, this cut</span>
+        <span><i class="sw" style="background:var(--spoil2)"></i>Earlier spoil piles</span>
+        <span><i class="sw" style="background:var(--accent)"></i>Dimension</span>
+        <span><i class="sw" style="background:var(--hl)"></i>Highlighted</span>
+      </div>
+      <div id="scaleNote"></div>
+    </div>
+  </section>
+
+  <section class="tiles" id="tiles" aria-label="Key results"></section>
+
+  <div class="duo">
+    <section class="card" aria-labelledby="sensTitle">
+      <header><h2 id="sensTitle">How one result responds to one input</h2></header>
+      <div class="sensbody">
+        <div class="sensctl">
+          <label>Result <select id="sensOut"></select></label>
+          <label>Input <select id="sensIn"></select></label>
+          <label><input type="checkbox" id="sensFollow" checked> follow the slider I move</label>
+        </div>
+        <svg id="sens" viewBox="0 0 560 250" role="img" aria-label="Sensitivity chart"></svg>
+        <p class="sensnote" id="sensNote"></p>
+      </div>
+    </section>
+    <section class="card" aria-labelledby="tryTitle">
+      <header><h2 id="tryTitle">Things to try</h2><span class="sub">Each button moves a slider smoothly from the current value</span></header>
+      <div class="tries" id="tries"></div>
+      <p id="tryMsg" class="tries" style="padding-top:0"></p>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="solTitle">
+    <header>
+      <div><h2 id="solTitle">Worked solution</h2><div class="sub">Equation numbers follow the lecture slides. Underlined numbers are your inputs; hover a row to find it on the drawing.</div></div>
+    </header>
+    <div class="sol" id="sol"></div>
+  </section>
+
+  <section class="card notes">
+    <h3 style="font-size:16px">Assumptions in this model</h3>
+    <ul>
+      <li>The overburden block is a parallelogram W wide and D high whose sides follow the highwall angle β, so its area is W × D. Everything is per 1 m of strip length (L = 1).</li>
+      <li>The spoil of each cut fills a W-wide strip of the previous pit. Its cross-section is the parallelogram W × H minus the triangle between neighbouring peaks, (W/2)² tanθ.</li>
+      <li>The tub set-back PD is taken as 0.75 × TD as a safety allowance. TD is only known once a machine is chosen, so treat it as a trial value.</li>
+      <li>Following the lecture solution, ore that is uncovered but lost (O<sub>Loss</sub>) is converted to bank m³ with the ore density and added to the dragline's annual volume.</li>
+      <li>The lecture solution rounds intermediate values (5.88 Mt/yr, 6,360 h/yr). This page carries full precision, so with Example 2 loaded BC shows 74.7 m³ rather than 74.63 m³, and MSL about 192,600 kg rather than 192,426 kg.</li>
+      <li>The dragline outline, boom angle and bucket are drawn schematically to show where the boom point must reach. Only OR, RF and PD are computed. The bucket drawing is scaled to the computed bucket capacity.</li>
+      <li>The 120° swing angle in Example 2 does not enter these equations.</li>
+    </ul>
+  </section>
+</main>
+</div>
+
+<script>
+(() => {
+"use strict";
+const DEG = Math.PI/180;
+
+/* ---------- parameter definitions ---------- */
+const PARAMS = [
+  // geometry
+  {k:'W',  fs:'fsGeo', sym:'W',  name:'Pit width',            unit:'m',     min:10, max:80,  step:0.5, dec:1, ex:40,   fig:'W'},
+  {k:'D',  fs:'fsGeo', sym:'D',  name:'Overburden depth',     unit:'m',     min:5,  max:60,  step:0.5, dec:1, ex:30,   fig:'D'},
+  {k:'T',  fs:'fsGeo', sym:'T',  name:'Seam (ore) thickness', unit:'m',     min:1,  max:20,  step:0.1, dec:1, ex:7,    fig:'T'},
+  {k:'beta',fs:'fsGeo',sym:'β',  name:'Highwall (pit slope) angle', unit:'°', min:45, max:85, step:0.5, dec:1, ex:68, fig:'beta RF1'},
+  {k:'theta',fs:'fsGeo',sym:'θ', name:'Spoil pile angle',     unit:'°',     min:25, max:45,  step:0.5, dec:1, ex:38,   fig:'theta RF2'},
+  {k:'SF', fs:'fsGeo', sym:'SF', name:'Swell factor',         unit:'',      min:1.05,max:1.6,step:0.01,dec:2, ex:1.25, fig:'VS H'},
+  // machine
+  {k:'TD', fs:'fsMach',sym:'TD', name:'Tub diameter (trial)', unit:'m',     min:6,  max:30,  step:0.5, dec:1, ex:18,   fig:'TD PD', note:'Not given in Example 2. Used only for OR = 0.75·TD + RF.'},
+  {k:'Wd', fs:'fsMach',sym:'W_d',name:'Offset of spoil toe',  unit:'m',     min:0,  max:20,  step:0.5, dec:1, ex:5,    fig:'Wd', onlyFor:'wd'},
+  // production
+  {k:'P',  fs:'fsProd',sym:'P',  name:'Ore production',       unit:'Mt/yr', min:0.5,max:20,  step:0.1, dec:1, ex:5},
+  {k:'R',  fs:'fsProd',sym:'R',  name:'Ore recovery',         unit:'%',     min:50, max:100, step:1,   dec:0, ex:85},
+  {k:'rhoO',fs:'fsProd',sym:'ρ_ore',name:'Ore density (bank)',unit:'kg/m³', min:900,max:3500,step:10,  dec:0, ex:1300},
+  {k:'rhoB',fs:'fsProd',sym:'ρ_OB',name:'Overburden density (bank)',unit:'kg/m³',min:1500,max:3000,step:10,dec:0,ex:2100},
+  // operations
+  {k:'HO', fs:'fsOps', sym:'H_O',name:'Operating time',       unit:'h/yr',  min:4000,max:8760,step:10, dec:0, ex:8030},
+  {k:'A',  fs:'fsOps', sym:'A',  name:'Availability',         unit:'%',     min:50, max:100, step:1,   dec:0, ex:88},
+  {k:'U',  fs:'fsOps', sym:'U',  name:'Utilization',          unit:'%',     min:50, max:100, step:1,   dec:0, ex:90},
+  {k:'CT', fs:'fsOps', sym:'C_T',name:'Cycle time',           unit:'s',     min:40, max:90,  step:1,   dec:0, ex:60},
+  {k:'BFF',fs:'fsOps', sym:'BFF',name:'Bucket fill factor',   unit:'%',     min:60, max:100, step:1,   dec:0, ex:88},
+  {k:'rhoK',fs:'fsOps',sym:'ρ_bkt',name:'Bucket empty unit weight',unit:'kg/m³',min:600,max:1600,step:10,dec:0,ex:1100},
+];
+const PM = Object.fromEntries(PARAMS.map(p=>[p.k,p]));
+const p = Object.fromEntries(PARAMS.map(d=>[d.k,d.ex]));
+let variant = 'basic';
+
+const OUTS = [
+  {k:'H',  sym:'H',   name:'Spoil pile height', unit:'m',   dec:2, cls:'geo', fig:'H'},
+  {k:'SH', sym:'SH',  name:'Stacking height',   unit:'m',   dec:2, cls:'geo', fig:'SH'},
+  {k:'RF', sym:'RF',  name:'Reach factor',      unit:'m',   dec:2, cls:'geo', fig:'RF RF1 RF2'},
+  {k:'OR', sym:'OR',  name:'Operating radius',  unit:'m',   dec:2, cls:'geo', fig:'OR PD'},
+  {k:'L',  sym:'L',   name:'Pit advance',       unit:'m/yr',dec:0, cls:'prod'},
+  {k:'OBT',sym:'OB_T',name:'Annual stripping',  unit:'Mm³/yr',dec:2, cls:'prod'},
+  {k:'BC', sym:'BC',  name:'Bucket capacity',   unit:'m³',  dec:2, cls:'prod'},
+  {k:'MSL',sym:'MSL', name:'Max. suspended load',unit:'t',  dec:1, cls:'prod'},
+];
+
+/* ---------- model ---------- */
+function compute(q, vr){
+  const tb = Math.tan(q.beta*DEG), tt = Math.tan(q.theta*DEG);
+  const r = {tb, tt};
+  r.VOB = q.W*q.D*1;
+  r.VS = r.VOB*q.SF;
+  r.H = q.D*q.SF + q.W/4*tt;
+  r.SH = r.H - (q.T + q.D);
+  r.RF1 = q.D/tb;
+  r.RF2 = r.H/tt;                       // = D·SF/tanθ + W/4
+  r.off = vr==='coal' ? -q.T/tt : vr==='wd' ? q.Wd : 0;
+  r.RF = r.RF1 + r.RF2 + r.off;
+  r.PD = 0.75*q.TD;
+  r.OR = r.PD + r.RF;
+  r.notchY = r.H - q.W*tt/2;
+  r.tri = (q.W/2)**2*tt;
+  r.Aspoil = q.W*r.H - r.tri;
+  // production
+  r.Ounc = q.P/(q.R/100);
+  r.Oloss = r.Ounc - q.P;
+  r.MA = r.Ounc*1e6/((q.rhoO/1000)*q.T);
+  r.L = r.MA/q.W;
+  r.OBvol = r.MA*q.D;                   // m³/yr
+  r.OBloss = r.Oloss*1e6/(q.rhoO/1000); // m³/yr
+  r.OBTm3 = r.OBvol + r.OBloss;
+  r.OBT = r.OBTm3/1e6;
+  r.OP = q.HO*(q.A/100)*(q.U/100);
+  r.BC = r.OBTm3*q.SF*(q.CT/3600)/(r.OP*(q.BFF/100));
+  r.WD = q.rhoK*r.BC;
+  r.WL = r.BC*(q.BFF/100)*q.rhoB/q.SF;
+  r.MSLkg = r.WD + r.WL;
+  r.MSL = r.MSLkg/1000;
+  return r;
+}
+
+/* ---------- formatting ---------- */
+const fmt = (x,d=2) => (Number.isFinite(x) ? x : NaN).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const symHTML = s => s.replace(/_(\w+)/,'<sub>$1</sub>');
+const pv = (k, d) => `<span class="pv" data-p="${k}">${fmt(p[k], d ?? PM[k].dec)}</span>`;
+const pf = (k, d=2) => `<span class="pv" data-p="${k}">${fmt(p[k]/100, d)}</span>`;   // percent → fraction
+const fr = (a,b) => `<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+const op = s => `<span class="op">${s}</span>`;
+
+/* ---------- build controls ---------- */
+function buildControls(){
+  for (const d of PARAMS){
+    const fs = document.getElementById(d.fs);
+    const row = document.createElement('div');
+    row.className = 'prm'; row.dataset.k = d.k; row.id = 'row-'+d.k;
+    row.innerHTML = `
+      <label for="rng-${d.k}"><span class="sym">${symHTML(d.sym)}</span><span>${d.name}</span></label>
+      <span class="val"><input type="number" id="num-${d.k}" aria-label="${d.name} value" min="${d.min}" max="${d.max}" step="${d.step}"><span class="unit">${d.unit}</span></span>
+      <input type="range" id="rng-${d.k}" min="${d.min}" max="${d.max}" step="${d.step}">
+      ${d.note ? `<div class="note">${d.note}</div>`:''}`;
+    if (d.k==='TD'){
+      // RF formulation selector sits above the tub diameter
+      const sel = document.createElement('div');
+      sel.className = 'selrow';
+      sel.innerHTML = `<label for="variant" style="font-size:13.5px">Reach factor formulation</label>
+        <select id="variant">
+          <option value="basic">Eq. (9): spoil toe at the coal edge on the pit floor</option>
+          <option value="coal">Spoil slope starts at the top of the coal edge (− T/tanθ)</option>
+          <option value="wd">Spoil toe set back from the coal edge (+ W_d)</option>
+        </select>`;
+      fs.appendChild(sel);
+    }
+    fs.appendChild(row);
+    const rng = row.querySelector('input[type=range]'), num = row.querySelector('input[type=number]');
+    rng.value = p[d.k]; num.value = fmt(p[d.k], d.dec).replace(/,/g,'');
+    rng.addEventListener('input', () => { setParam(d.k, +rng.value, 'rng'); });
+    num.addEventListener('change', () => {
+      let v = parseFloat(num.value); if (!Number.isFinite(v)) v = p[d.k];
+      v = Math.min(d.max, Math.max(d.min, v));
+      setParam(d.k, v, 'num');
+    });
+    const act = () => setActive(d.k), deact = () => setActive(null);
+    row.addEventListener('mouseenter', act); row.addEventListener('mouseleave', deact);
+    rng.addEventListener('focus', act); rng.addEventListener('blur', deact);
+    num.addEventListener('focus', act); num.addEventListener('blur', deact);
+  }
+  document.getElementById('variant').addEventListener('change', e => { variant = e.target.value; syncVariantUI(); update(); });
+  syncVariantUI();
+}
+function syncVariantUI(){
+  document.getElementById('row-Wd').style.display = variant==='wd' ? '' : 'none';
+  document.getElementById('variant').value = variant;
+}
+function setParam(k, v, src){
+  p[k] = v;
+  const d = PM[k];
+  if (src!=='rng') document.getElementById('rng-'+k).value = v;
+  if (src!=='num') document.getElementById('num-'+k).value = fmt(v, d.dec).replace(/,/g,'');
+  if (document.getElementById('sensFollow').checked && src!=='anim-silent'){ sensIn = k; document.getElementById('sensIn').value = k; }
+  update();
+}
+
+/* ---------- highlighting ---------- */
+let activeParam = null, hoverKeys = null;
+const hlStyle = document.getElementById('hlstyle');
+function setActive(k){ activeParam = k; applyHL(); }
+function setHover(keys){ hoverKeys = keys; applyHL(); }
+function applyHL(){
+  const keys = new Set();
+  if (activeParam) (PM[activeParam].fig||'').split(' ').filter(Boolean).forEach(x=>keys.add(x));
+  if (hoverKeys) hoverKeys.split(' ').filter(Boolean).forEach(x=>keys.add(x));
+  let css = '';
+  for (const k of keys){
+    css += `#fig .dim[data-k~="${k}"]{color:var(--hl)} #fig .dim[data-k~="${k}"] line{stroke-width:2.4}
+            #fig .region[data-k~="${k}"]{stroke:var(--hl);stroke-width:3}
+            .tile[data-k~="${k}"]{border-color:var(--hl)} `;
+  }
+  if (activeParam){
+    css += `.pv[data-p="${activeParam}"]{background:var(--hl);color:#fff;box-shadow:none}
+            #row-${activeParam}{background:var(--soft)}`;
+  }
+  hlStyle.textContent = css;
+  document.getElementById('constr').classList.toggle('on', document.getElementById('tgCon').checked || keys.has('constr'));
+}
+
+/* ---------- figure ---------- */
+const VBW = 1100, VBH = 600, PADT = 118, PADB = 74, PADL = 40, PADR = 60;
+let sRef = null;
+const svg = document.getElementById('fig');
+
+function sceneExtents(q, r){
+  const crestX = -q.D/r.tb, bench = q.T + q.D;
+  const xc = crestX - r.PD;
+  const peakX = r.off + r.RF2;
+  const geo = dlGeom(q, r, xc, bench, peakX);
+  const xL = Math.min(xc - 0.75*q.TD - 6, -q.W + crestX - 10);
+  const xR = Math.max(peakX + 1.5*q.W + 8, peakX + 12);
+  const yT = Math.max(geo.bpY + 3, r.H + 4, bench + 4);
+  return {xL, xR, yT, yB:-3.5, crestX, bench, xc, peakX, geo};
+}
+function dlGeom(q, r, xc, bench, peakX){
+  const TD = q.TD;
+  const footX = xc + 0.45*TD, footY = bench + 0.16*TD + 1.2;
+  let bpY = footY + (peakX - footX)*Math.tan(30*DEG);
+  bpY = Math.max(bpY, r.H + 0.45*TD + 8);
+  return {footX, footY, bpX:peakX, bpY};
+}
+
+function drawFigure(){
+  const r = R;
+  const q = p;
+  const E = sceneExtents(q, r);
+  const fitS = Math.min((VBW-PADL-PADR)/(E.xR-E.xL), (VBH-PADT-PADB)/(E.yT-E.yB));
+  if (sRef===null){ sRef = fitS; }
+  const s = Math.min(fitS, sRef);
+  const contentW = (E.xR-E.xL)*s;
+  const ox = PADL + ((VBW-PADL-PADR) - contentW)/2 - E.xL*s;
+  const oy = VBH - PADB - (0 - E.yB)*s;
+  const X = x => ox + x*s, Y = y => oy - y*s;
+  const P2 = pts => pts.map(([x,y]) => `${X(x).toFixed(1)},${Y(y).toFixed(1)}`).join(' ');
+  const tt = r.tt, tb = r.tb, W = q.W, T = q.T, D = q.D, H = r.H;
+  const {crestX, bench, xc, peakX, geo} = E;
+  const xL = E.xL - 2, xR = E.xR + 2;
+  const a = r.off;
+  const show = id => document.getElementById(id).checked;
+  let g = '';
+
+  g += `<defs>
+    <clipPath id="clipScene"><rect x="${X(xL)}" y="${Y(E.yT+40)}" width="${X(xR)-X(xL)}" height="${Y(E.yB)-Y(E.yT+40)}"/></clipPath>
+    <clipPath id="clipPit"><rect x="${X(0)}" y="${Y(E.yT+40)}" width="${X(xR)-X(0)}" height="${Y(0)-Y(E.yT+40)}"/></clipPath>
+    <pattern id="hatchOB" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(30)"><line x1="0" y1="0" x2="0" y2="8" stroke="var(--obline)" stroke-width="0.7" opacity=".45"/></pattern>
+    <pattern id="dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="var(--spoilline)" opacity=".45"/><circle cx="6.5" cy="6.5" r="0.9" fill="var(--spoilline)" opacity=".35"/></pattern>
+  </defs>`;
+
+  // ---- ground and strata
+  g += `<g clip-path="url(#clipScene)">`;
+  g += `<rect x="${X(xL)}" y="${Y(0)}" width="${X(xR)-X(xL)}" height="${Y(-3.5)-Y(0)}" fill="var(--floor)"/>`;
+  // undisturbed overburden to the left of the cut
+  g += `<polygon points="${P2([[xL,T],[-W,T],[-W+crestX,bench],[xL,bench]])}" fill="var(--ob2)" stroke="var(--obline)" stroke-width="1"/>`;
+  g += `<polygon points="${P2([[xL,T],[-W,T],[-W+crestX,bench],[xL,bench]])}" fill="url(#hatchOB)"/>`;
+  // coal (unmined + this strip)
+  g += `<rect x="${X(xL)}" y="${Y(T)}" width="${X(0)-X(xL)}" height="${Y(0)-Y(T)}" fill="var(--coal)"/>`;
+  g += `<line x1="${X(-W)}" y1="${Y(T)}" x2="${X(-W)}" y2="${Y(0)}" stroke="var(--panel)" stroke-dasharray="3 3" stroke-width="1" opacity=".6"/>`;
+  // overburden block of this cut
+  g += `<polygon class="region" data-k="VOB W D" points="${P2([[-W,T],[0,T],[crestX,bench],[-W+crestX,bench]])}" fill="var(--ob)" stroke="var(--obline)" stroke-width="1.4"/>`;
+  g += `<polygon points="${P2([[-W,T],[0,T],[crestX,bench],[-W+crestX,bench]])}" fill="url(#hatchOB)" pointer-events="none"/>`;
+  // spoil piles: k=0 current, k=1..3 earlier strips
+  const spoilPoly = k => { const b = a + k*W; return [[b,0],[b+H/tt,H],[b+H/tt+W/2,r.notchY],[b+W,0]]; };
+  g += `<g clip-path="url(#clipPit)">`;
+  if (show('tgPrev')){
+    for (let k=3;k>=1;k--) g += `<polygon points="${P2(spoilPoly(k))}" fill="var(--spoil2)" stroke="var(--spoilline)" stroke-width="1" opacity="${k===1?1:0.75}"/>`;
+  }
+  g += `<polygon class="region" data-k="VS H" points="${P2(spoilPoly(0))}" fill="var(--spoil)" stroke="var(--spoilline)" stroke-width="1.4"><title>Spoil from this cut: V_S = ${fmt(r.VS,1)} m³ per m</title></polygon>`;
+  g += `<polygon points="${P2(spoilPoly(0))}" fill="url(#dots)" pointer-events="none"/>`;
+  g += `</g>`;
+  // floor line
+  g += `<line x1="${X(xL)}" y1="${Y(0)}" x2="${X(xR)}" y2="${Y(0)}" stroke="var(--ink)" stroke-width="1" opacity=".5"/>`;
+  g += `</g>`;
+
+  // ---- Eq. (4) construction overlay
+  g += `<g id="constr">
+    <polygon points="${P2([[a,0],[a+H/tt,H],[a+H/tt+W,H],[a+W,0]])}" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-dasharray="7 5"/>
+    <polygon points="${P2([[a+H/tt,H],[a+H/tt+W,H],[a+H/tt+W/2,r.notchY]])}" fill="var(--hl)" fill-opacity=".35" stroke="var(--hl)" stroke-width="1.5"/>
+    <text class="lbl big" x="${X(a+H/tt+W/2)}" y="${Y(H)-8}" text-anchor="middle" style="fill:var(--hl)">(W/2)²·tanθ = ${fmt(r.tri,1)} m²</text>
+    <text class="lbl big" x="${X(a+W/2+H/(2*tt))+18}" y="${Y(H*0.5)}" style="fill:var(--accent)">W × H = ${fmt(W*H,1)} m²</text>
+  </g>`;
+
+  // ---- dragline
+  if (show('tgDl')){
+    const TD = q.TD, tubY = bench, houseB = bench + 0.08*TD, houseT = houseB + 0.34*TD;
+    const hx1 = xc - 0.62*TD, hx2 = xc + 0.5*TD;
+    const mastTop = [xc + 0.05*TD, houseT + 0.62*TD];
+    const {footX, footY, bpX, bpY} = geo;
+    const bside = Math.cbrt(Math.max(r.BC, 1));
+    const bkY = Math.max(H + 1.5, bench + 2) + 0.75*bside;
+    // ropes
+    g += `<g>`;
+    g += `<line class="rope" x1="${X(mastTop[0])}" y1="${Y(mastTop[1])}" x2="${X(bpX)}" y2="${Y(bpY)}"/>`;
+    g += `<line class="rope" x1="${X(mastTop[0])}" y1="${Y(mastTop[1])}" x2="${X(hx1+0.05*TD)}" y2="${Y(houseT)}"/>`;
+    g += `<line class="rope" x1="${X(bpX)}" y1="${Y(bpY)}" x2="${X(bpX)}" y2="${Y(bkY)}"/>`;
+    const fairX = hx2, fairY = houseB + 0.06*TD;
+    const midX = (fairX + bpX - 0.6*bside)/2, midY = (fairY + bkY - 0.4*bside)/2 - 0.04*(bpX-fairX);
+    g += `<path class="rope" d="M${X(fairX)},${Y(fairY)} Q${X(midX)},${Y(midY)} ${X(bpX-0.65*bside)},${Y(bkY-0.45*bside)}"/>`;
+    // boom lattice
+    const bl = Math.hypot(bpX-footX, bpY-footY), ux=(bpX-footX)/bl, uy=(bpY-footY)/bl, nx=-uy, ny=ux, hw=0.032*TD+0.5;
+    const A1=[footX+nx*hw,footY+ny*hw], A2=[bpX+nx*hw*0.4,bpY+ny*hw*0.4], B1=[footX-nx*hw,footY-ny*hw], B2=[bpX-nx*hw*0.4,bpY-ny*hw*0.4];
+    let zz = `M${X(B1[0])},${Y(B1[1])}`; const n = 22;
+    for (let i=1;i<=n;i++){ const t=i/n, w=hw*(1-0.6*t)*(i%2?1:-1); zz += ` L${X(footX+ux*bl*t+nx*w)},${Y(footY+uy*bl*t+ny*w)}`; }
+    g += `<polygon points="${P2([A1,A2,B2,B1])}" fill="none" class="boom" stroke-width="1.6"/>`;
+    g += `<path d="${zz}" class="boom" stroke-width="0.7" opacity=".7"/>`;
+    // mast
+    g += `<polyline points="${P2([[xc+0.32*TD,houseT],mastTop,[xc-0.12*TD,houseT]])}" class="machine" fill="none" style="fill:none"/>`;
+    // tub + house
+    g += `<rect class="machine region" data-k="TD" x="${X(xc-TD/2)}" y="${Y(tubY+0.08*TD)}" width="${TD*s}" height="${0.08*TD*s}" style="fill:var(--muted)"/>`;
+    g += `<polygon class="machine" points="${P2([[hx1,houseB],[hx2,houseB],[hx2,houseT-0.06*TD],[hx2-0.08*TD,houseT],[hx1,houseT]])}"/>`;
+    g += `<rect class="machine" x="${X(xc-0.25*TD)}" y="${Y(houseT+0.12*TD)}" width="${0.22*TD*s}" height="${0.12*TD*s}"/>`;
+    // bucket
+    const bw = 1.25*bside, bh = 0.8*bside;
+    g += `<polygon class="machine" points="${P2([[bpX-bw/2,bkY],[bpX+bw/2,bkY],[bpX+bw*0.38,bkY-bh],[bpX-bw/2,bkY-bh]])}" style="fill:var(--ink)"><title>Bucket drawn to BC = ${fmt(r.BC,1)} m³</title></polygon>`;
+    g += `<circle cx="${X(bpX)}" cy="${Y(bpY)}" r="3.5" fill="var(--ink)"/>`;
+    // centre line
+    g += `<line class="ext" x1="${X(xc)}" y1="${Y(bench-1)}" x2="${X(xc)}" y2="${Y(mastTop[1]+2)}" style="stroke-dasharray:10 3 2 3"/>`;
+  }
+
+  // ---- labels
+  if (show('tgLbl')){
+    const cx = -W/2 + crestX/2, cy = T + D/2;
+    g += `<text class="lbl big" x="${X(cx)}" y="${Y(cy)}" text-anchor="middle">V<tspan font-size="11" dy="4">OB</tspan><tspan dy="-4"> = ${fmt(r.VOB,0)} m³/m</tspan></text>`;
+    g += `<text class="lbl mut" x="${X(cx)}" y="${Y(cy)+18}" text-anchor="middle">overburden, this cut</text>`;
+    const sx = a + W/2 + H/(2*tt) - 0.08*W, sy = H*0.4;
+    g += `<text class="lbl big" x="${X(sx)}" y="${Y(sy)}" text-anchor="middle">V<tspan font-size="11" dy="4">S</tspan><tspan dy="-4"> = ${fmt(r.VS,0)} m³/m</tspan></text>`;
+    g += `<text class="lbl mut" x="${X(sx)}" y="${Y(sy)+18}" text-anchor="middle">spoil, this cut</text>`;
+    g += `<text class="lbl" x="${X(-W - 3)}" y="${Y(T/2)+4}" text-anchor="end" style="fill:#fff;stroke:none">coal seam</text>`;
+    g += `<text class="lbl mut" x="${X(xL+2)}" y="${Y(bench)-6}">bench (dragline level)</text>`;
+    if (show('tgPrev')) g += `<text class="lbl mut" x="${X(a+W+H/tt)}" y="${Y(H)-8}" text-anchor="middle">earlier spoil</text>`;
+  }
+
+  // ---- dimensions
+  if (show('tgDims')){
+    const rowY = i => Y(E.yT) - 26 - 32*i;          // px rows above the scene
+    const belowY = i => Y(E.yB) + 22 + 26*i;          // px rows below
+    // extension lines
+    const ext = (x, y0px, y1px) => `<line class="ext" x1="${X(x)}" y1="${y0px}" x2="${X(x)}" y2="${y1px}"/>`;
+    g += ext(xc, Y(bench+0.5), rowY(2)-6);
+    g += ext(crestX, Y(bench), rowY(1)-6);
+    g += ext(0, Y(T), rowY(0)-6);
+    g += ext(peakX, Y(H), rowY(2)-6);
+    // bench level to peak (for SH)
+    g += `<line class="ext" x1="${X(crestX)}" y1="${Y(bench)}" x2="${X(peakX+4)}" y2="${Y(bench)}" style="stroke:var(--accent);opacity:.8"/>`;
+    // horizontal dims
+    g += hdim(X(crestX), X(0), rowY(0), 'RF₁', 'RF1', `D/tanβ = ${fmt(r.RF1,2)}`);
+    g += hdim(X(0), X(peakX), rowY(0), 'RF₂', 'RF2', `${fmt(peakX,2)} m`);
+    g += hdim(X(xc), X(crestX), rowY(1), 'PD', 'PD TD', `${fmt(r.PD,2)}`);
+    g += hdim(X(crestX), X(peakX), rowY(1), 'RF', 'RF', `${fmt(r.RF,2)} m`);
+    g += hdim(X(xc), X(peakX), rowY(2), 'OR', 'OR', `${fmt(r.OR,2)} m`);
+    // W below
+    g += ext(-W, Y(0), belowY(0)+6); g += ext(0, Y(0), belowY(a<0?1:0)+6);
+    g += hdim(X(-W), X(0), belowY(0), 'W', 'W', `${fmt(W,1)} m`);
+    const wRow = a < 0 ? 1 : 0;
+    g += ext(a, Y(0), belowY(wRow)+6); g += ext(a+W, Y(0), belowY(wRow)+6);
+    g += hdim(X(a), X(a+W), belowY(wRow), 'W', 'W', `${fmt(W,1)} m`);
+    if (variant==='wd' && q.Wd>0) g += hdim(X(0), X(a), belowY(1), 'W_d', 'Wd', `${fmt(q.Wd,1)}`);
+    if (variant==='coal') g += hdim(X(a), X(0), belowY(0), 'T/tanθ', 'T theta', `${fmt(-a,2)}`);
+    // vertical dims
+    g += vdim(X(-W + crestX - 3), Y(T), Y(bench), 'D', 'D', `${fmt(D,1)} m`);
+    g += vdim(X(xL+3.5), Y(0), Y(T), 'T', 'T', `${fmt(T,1)}`);
+    g += `<line class="ext" x1="${X(peakX)}" y1="${Y(H)}" x2="${X(peakX)}" y2="${Y(0)}"/>`;
+    g += vdim(X(peakX)+14, Y(0), Y(H), 'H', 'H', `${fmt(H,2)} m`, true);
+    g += vdim(X(peakX)-14, Y(bench), Y(H), 'SH', 'SH', `${fmt(r.SH,2)}`, false, true);
+    // angles
+    g += arc(X(0), Y(T), 180-q.beta, 180, 34, 'β', 'beta', `${fmt(q.beta,1)}°`);
+    const ta = Math.max(a,0), ty = a<0 ? T : 0;
+    g += arc(X(ta), Y(ty), 0, q.theta, 40, 'θ', 'theta', `${fmt(q.theta,1)}°`);
+  }
+
+  // scale bar
+  const sb = s*20 > 160 ? 10 : 20;
+  g += `<g transform="translate(${VBW-PADR-sb*s-10},${VBH-16})"><rect width="${sb*s/2}" height="5" fill="var(--ink)"/><rect x="${sb*s/2}" width="${sb*s/2}" height="5" fill="none" stroke="var(--ink)"/>
+        <text class="lbl mut" x="0" y="-5">0</text><text class="lbl mut" x="${sb*s}" y="-5" text-anchor="end">${sb} m</text></g>`;
+
+  svg.innerHTML = g;
+  document.getElementById('scaleNote').textContent = s < sRef - 1e-9 ? `Zoomed out to ${fmt(s/sRef*100,0)}% so the larger geometry fits. Horizontal and vertical scales are equal.` : 'Horizontal and vertical scales are equal.';
+  applyHL();
+
+  function arrow(x, y, dir){ // dir: 'l','r','u','d'
+    const L=8, w=3.5;
+    const m = {l:[[x,y],[x+L,y-w],[x+L,y+w]], r:[[x,y],[x-L,y-w],[x-L,y+w]], u:[[x,y],[x-w,y+L],[x+w,y+L]], d:[[x,y],[x-w,y-L],[x+w,y-L]]}[dir];
+    return `<polygon points="${m.map(v=>v.join(',')).join(' ')}"/>`;
+  }
+  function hdim(x1, x2, y, label, k, val){
+    if (Math.abs(x2-x1) < 1) return '';
+    const lo = Math.min(x1,x2), hi = Math.max(x1,x2), w = hi-lo;
+    const txt = `${label} = ${val}`;
+    const tw = txt.length*8.6;
+    let out = `<g class="dim" data-k="${k}"><title>${label}</title><line x1="${lo}" y1="${y}" x2="${hi}" y2="${y}" stroke-width="1.3"/>`;
+    out += arrow(lo,y,'l') + arrow(hi,y,'r');
+    out += `<line x1="${lo}" y1="${y-6}" x2="${lo}" y2="${y+6}" stroke-width="1"/><line x1="${hi}" y1="${y-6}" x2="${hi}" y2="${y+6}" stroke-width="1"/>`;
+    if (w > tw + 6) out += `<text x="${(lo+hi)/2}" y="${y-6}" text-anchor="middle">${txt}</text>`;
+    else if (w > label.length*9 + 4) out += `<text x="${(lo+hi)/2}" y="${y-6}" text-anchor="middle">${label}</text>`;
+    else out += `<text x="${hi+6}" y="${y+5}">${label}</text>`;
+    return out + '</g>';
+  }
+  function vdim(x, y1, y2, label, k, val, right, small){
+    if (Math.abs(y2-y1) < 1) return '';
+    const top = Math.min(y1,y2), bot = Math.max(y1,y2);
+    const up = y2 < y1;
+    let out = `<g class="dim" data-k="${k}"><title>${label}</title><line x1="${x}" y1="${top}" x2="${x}" y2="${bot}" stroke-width="1.3"/>`;
+    out += arrow(x,top,'u') + arrow(x,bot,'d');
+    const ty = (top+bot)/2 + 5;
+    const neg = !up ? ' (below bench)' : '';
+    const txt = `${label} = ${val}${small && !up ? '' : ''}`;
+    out += right === true ? `<text x="${x+7}" y="${ty}">${txt}</text>` : `<text x="${x-7}" y="${ty}" text-anchor="end">${txt}</text>`;
+    if (small && !up) out += `<text x="${x-7}" y="${ty+17}" text-anchor="end" style="font-size:12px">peak below bench</text>`;
+    return out + '</g>';
+  }
+  function arc(cx, cy, a0, a1, rad, label, k, val){
+    const pt = ang => [cx + rad*Math.cos(ang*DEG), cy - rad*Math.sin(ang*DEG)];
+    const [x0,y0] = pt(a0), [x1,y1] = pt(a1);
+    const large = Math.abs(a1-a0) > 180 ? 1 : 0;
+    const [lx,ly] = (() => { const m=(a0+a1)/2; return [cx + (rad+16)*Math.cos(m*DEG), cy - (rad+16)*Math.sin(m*DEG)]; })();
+    return `<g class="dim" data-k="${k}"><path d="M${x0},${y0} A${rad},${rad} 0 ${large} 0 ${x1},${y1}" fill="none" stroke-width="1.5"/>
+      <text x="${lx}" y="${ly+5}" text-anchor="middle">${label}</text></g>`;
+  }
+}
+
+/* ---------- tiles ---------- */
+const prevVals = {};
+function renderTiles(){
+  const el = document.getElementById('tiles');
+  if (!el.children.length){
+    el.innerHTML = OUTS.map(o => `<div class="tile ${o.cls}" data-k="${o.fig||''}" id="tile-${o.k}">
+      <div class="k"><b>${symHTML(o.sym)}</b> ${o.name}</div><div class="v"></div><div class="d"></div></div>`).join('');
+    for (const o of OUTS) if (o.fig){
+      const t = document.getElementById('tile-'+o.k);
+      t.addEventListener('mouseenter', () => setHover(o.fig)); t.addEventListener('mouseleave', () => setHover(null));
+    }
+  }
+  for (const o of OUTS){
+    const t = document.getElementById('tile-'+o.k);
+    const v = R[o.k];
+    t.querySelector('.v').innerHTML = `${fmt(v,o.dec)}<small>${o.unit}</small>`;
+    let d = '';
+    if (o.k==='RF') d = `${fmt(v*3.28084,0)} ft`;
+    if (o.k==='MSL') d = `${fmt(R.MSLkg*2.20462,0)} lb`;
+    if (o.k==='SH') d = v < 0 ? 'peak sits below the bench' : 'peak above the bench';
+    if (o.k==='OR') d = `PD ${fmt(R.PD,1)} + RF`;
+    if (o.k==='L') d = 'strip length per year';
+    if (o.k==='OBT') d = 'bank m³ per year';
+    if (o.k==='BC') d = 'loose m³ per pass';
+    if (o.k==='H') d = 'above the pit floor';
+    t.querySelector('.d').textContent = d;
+    if (prevVals[o.k] !== undefined && Math.abs(prevVals[o.k]-v) > 1e-9){
+      t.classList.remove('bump'); void t.offsetWidth; t.classList.add('bump');
+    }
+    prevVals[o.k] = v;
+  }
+}
+
+/* ---------- worked solution ---------- */
+function step(eq, title, why, lines, res, keys){
+  return `<div class="step" data-hk="${keys||''}">
+    <div class="eq">${eq}</div>
+    <div><div class="st">${title}</div>${why?`<div class="why">${why}</div>`:''}
+      ${lines.map((l,i)=>`<div class="math${i? ' sub':''}">${l}</div>`).join('')}</div>
+    <div class="res">${res}</div></div>`;
+}
+function renderSolution(){
+  const r = R, q = p;
+  const th = pv('theta'), be = pv('beta');
+  let h = '';
+  h += `<div class="part"><h3>A · Range diagram (per 1 m of strip)</h3>`;
+  h += step('(1)', 'Overburden volume over a strip of length L', 'The block removed in one cut is W wide and D deep.',
+    [`V<sub>OB</sub> = W ${op('×')} D ${op('×')} L`], '', 'VOB');
+  h += step('(2)', 'Take a unit length, L = 1 m', 'Working per metre of strip turns volumes into cross-sectional areas.',
+    [`V<sub>OB</sub> = W ${op('×')} D ${op('×')} 1`, `= ${pv('W')} ${op('×')} ${pv('D')} ${op('×')} 1`],
+    `${fmt(r.VOB,1)}<small>m³ per m</small>`, 'VOB W D');
+  h += step('(3)', 'Spoil volume after swelling', 'Broken rock occupies more space than in the bank.',
+    [`V<sub>S</sub> = V<sub>OB</sub> ${op('×')} SF`, `= ${fmt(r.VOB,1)} ${op('×')} ${pv('SF')}`],
+    `${fmt(r.VS,1)}<small>m³ per m</small>`, 'VS');
+  h += step('(4)', 'Spoil cross-section from the geometry', 'Parallelogram W × H minus the triangle cut out between this peak and the next one (tick “Eq. (4) construction” or hover here to see it).',
+    [`V<sub>S</sub> = [ W ${op('×')} H ${op('−')} (${fr('W','2')})² tanθ ] ${op('×')} 1`,
+     `check: ${pv('W')} ${op('×')} ${fmt(r.H,2)} ${op('−')} (${fr(pv('W'),'2')})² tan ${th}° = ${fmt(q.W*r.H,1)} ${op('−')} ${fmt(r.tri,1)}`],
+    `${fmt(r.Aspoil,1)}<small>= V<sub>S</sub> ✓</small>`, 'constr VS');
+  h += step('(5)', 'Equate (3) and (4)', 'The spoil must hold exactly the swollen overburden.',
+    [`V<sub>OB</sub> ${op('×')} SF = [ W ${op('×')} H ${op('−')} (${fr('W','2')})² tanθ ] ${op('×')} 1`], '', 'constr VS');
+  h += step('(6)', 'Spoil pile height H', 'Substitute (2) into (5) and solve for H.',
+    [`H = D ${op('×')} SF + ${fr('W','4')} tanθ`,
+     `= ${pv('D')} ${op('×')} ${pv('SF')} + ${fr(pv('W'),'4')} ${op('×')} tan ${th}° = ${fmt(q.D*q.SF,2)} + ${fmt(q.W/4*r.tt,2)}`],
+    `${fmt(r.H,2)}<small>m</small>`, 'H');
+  h += step('(7)', 'Stacking height SH', 'How far the spoil peak rises above the bench the dragline stands on.',
+    [`SH = H ${op('−')} (T + D)`, `= ${fmt(r.H,2)} ${op('−')} (${pv('T')} + ${pv('D')})`],
+    `${fmt(r.SH,2)}<small>m</small>`, 'SH');
+  h += step('(8)', 'Reach factor from the drawing', 'RF₁ runs from the highwall crest to its toe; RF₂ from the toe to the spoil peak.',
+    [`RF = RF<sub>1</sub> + RF<sub>2</sub> = ${fr('D','tanβ')} + ${fr('H','tanθ')}`,
+     `= ${fr(pv('D'),`tan ${be}°`)} + ${fr(fmt(r.H,2),`tan ${th}°`)} = ${fmt(r.RF1,2)} + ${fmt(r.RF2,2)}`],
+    `${fmt(r.RF1+r.RF2,2)}<small>m</small>`, 'RF RF1 RF2');
+  let e9 = `RF = ${fr('D','tanβ')} + ${fr('D × SF','tanθ')} + ${fr('W','4')}`;
+  let s9 = `= ${fr(pv('D'),`tan ${be}°`)} + ${fr(`${pv('D')} × ${pv('SF')}`,`tan ${th}°`)} + ${fr(pv('W'),'4')}`;
+  let n9 = `= ${fmt(r.RF1,2)} + ${fmt(q.D*q.SF/r.tt,2)} + ${fmt(q.W/4,2)}`;
+  let why9 = 'Substitute H from (6) into (8).';
+  if (variant==='coal'){ e9 += ` ${op('−')} ${fr('T','tanθ')}`; s9 += ` ${op('−')} ${fr(pv('T'),`tan ${th}°`)}`; n9 += ` ${op('−')} ${fmt(-r.off,2)}`; why9 += ' The spoil slope starts from the top of the coal edge, so the peak moves T/tanθ closer to the dragline.'; }
+  if (variant==='wd'){ e9 += ` + W<sub>d</sub>`; s9 += ` + ${pv('Wd')}`; n9 += ` + ${fmt(q.Wd,2)}`; why9 += ' The spoil toe is kept W<sub>d</sub> away from the coal edge, so the peak moves W<sub>d</sub> further out.'; }
+  h += step('(9)', 'Reach factor in terms of the inputs', why9, [e9, s9, n9],
+    `${fmt(r.RF,2)}<small>m · ${fmt(r.RF*3.28084,1)} ft</small>`, 'RF RF1 RF2 Wd');
+  h += step('OR', 'Operating radius', 'Add the set-back from the tub centre to the crest, taken as 75% of the tub diameter.',
+    [`OR = PD + RF = 0.75 ${op('×')} TD + RF`, `= 0.75 ${op('×')} ${pv('TD')} + ${fmt(r.RF,2)}`],
+    `${fmt(r.OR,2)}<small>m</small>`, 'OR PD TD');
+  h += `</div>`;
+
+  h += `<div class="part"><h3>B · Annual stripping requirement</h3>`;
+  h += step('', 'Ore that must be uncovered', 'Some ore is lost, so more than the target must be exposed.',
+    [`O<sub>Uncovered</sub> = ${fr('P','R')} = ${fr(pv('P'), pf('R'))}`], `${fmt(r.Ounc,3)}<small>Mt/yr</small>`);
+  h += step('', 'Ore lost', '',
+    [`O<sub>Loss</sub> = O<sub>Uncovered</sub> ${op('−')} P = ${fmt(r.Ounc,3)} ${op('−')} ${pv('P')}`], `${fmt(r.Oloss,3)}<small>Mt/yr</small>`);
+  h += step('', 'Seam area to uncover, MA', 'Area × thickness × density = tonnage. Dividing kg/m³ by 1000 gives t/m³.',
+    [`MA = ${fr('O<sub>Uncovered</sub> × 10⁶','(ρ<sub>ore</sub>/1000) × T')} = ${fr(`${fmt(r.Ounc,3)} × 10⁶`,`${pv('rhoO')}/1000 × ${pv('T')}`)}`],
+    `${fmt(r.MA,0)}<small>m²/yr</small>`);
+  h += step('', 'Strip length mined per year, L', 'The pit is W wide, so the area becomes an advance length.',
+    [`L = ${fr('MA','W')} = ${fr(fmt(r.MA,0), pv('W'))}`], `${fmt(r.L,0)}<small>m/yr</small>`);
+  h += step('', 'Overburden over that area', '',
+    [`OB<sub>Volume</sub> = MA ${op('×')} D = ${fmt(r.MA,0)} ${op('×')} ${pv('D')}`], `${fmt(r.OBvol/1e6,2)}<small>Mm³/yr (bank)</small>`);
+  h += step('', 'Lost ore as a volume', 'Converted to bank volume with the ore density.',
+    [`O<sub>Loss</sub> = ${fr('O<sub>Loss</sub> × 10⁶','ρ<sub>ore</sub>/1000')} = ${fr(`${fmt(r.Oloss,3)} × 10⁶`,`${pv('rhoO')}/1000`)}`], `${fmt(r.OBloss/1e6,2)}<small>Mm³/yr (bank)</small>`);
+  h += step('', 'Total the dragline must move, OB<sub>T</sub>', '',
+    [`OB<sub>T</sub> = OB<sub>Volume</sub> + O<sub>Loss</sub> = ${fmt(r.OBvol/1e6,2)} + ${fmt(r.OBloss/1e6,2)}`], `${fmt(r.OBT,2)}<small>Mm³/yr (bank)</small>`);
+  h += `</div>`;
+
+  h += `<div class="part"><h3>C · Bucket capacity and maximum suspended load</h3>`;
+  h += step('', 'Effective operating time, OP', '',
+    [`OP = H<sub>O</sub> ${op('×')} A ${op('×')} U = ${pv('HO')} ${op('×')} ${pf('A')} ${op('×')} ${pf('U')}`], `${fmt(r.OP,0)}<small>h/yr</small>`);
+  h += step('', 'Bucket capacity, BC', 'Swollen volume per year, times hours per cycle, spread over the productive hours and the fill factor.',
+    [`BC = ${fr('OB<sub>T</sub> × SF × C<sub>T</sub>','OP × BFF')}`,
+     `= ${fr(`${fmt(r.OBT,2)} × 10⁶ × ${pv('SF')} × ${fr(pv('CT'),'3600')}`, `${fmt(r.OP,0)} × ${pf('BFF')}`)}`],
+    `${fmt(r.BC,2)}<small>m³</small>`);
+  h += step('', 'Dead weight of the empty bucket, W<sub>D</sub>', '',
+    [`W<sub>D</sub> = ρ<sub>bucket</sub> ${op('×')} BC = ${pv('rhoK')} ${op('×')} ${fmt(r.BC,2)}`], `${fmt(r.WD,0)}<small>kg</small>`);
+  h += step('', 'Payload, W<sub>L</sub>', 'Loose density = bank density ÷ SF.',
+    [`W<sub>L</sub> = BC ${op('×')} BFF ${op('×')} ${fr('ρ<sub>OB</sub>','SF')} = ${fmt(r.BC,2)} ${op('×')} ${pf('BFF')} ${op('×')} ${fr(pv('rhoB'),pv('SF'))}`], `${fmt(r.WL,0)}<small>kg</small>`);
+  h += step('', 'Maximum suspended load, MSL', 'Use MSL and RF with the manufacturer’s handbook or the standard selection chart (Step 5).',
+    [`MSL = W<sub>D</sub> + W<sub>L</sub> = ${fmt(r.WD,0)} + ${fmt(r.WL,0)}`], `${fmt(r.MSLkg,0)}<small>kg · ${fmt(r.MSLkg*2.20462,0)} lb</small>`);
+  h += `</div>`;
+  const el = document.getElementById('sol');
+  el.innerHTML = h;
+}
+document.getElementById('sol').addEventListener('mouseover', e => {
+  const s = e.target.closest('.step'); setHover(s ? s.dataset.hk : null);
+});
+document.getElementById('sol').addEventListener('mouseleave', () => setHover(null));
+
+/* ---------- alerts ---------- */
+function renderAlerts(){
+  const r = R, q = p, out = [];
+  if (r.notchY <= 0) out.push(['bad', `<b>The simple spoil model breaks down.</b> The valley between neighbouring spoil piles would sit ${fmt(-r.notchY,1)} m below the pit floor because W·tanθ/4 (${fmt(q.W*r.tt/4,1)} m) exceeds D·SF (${fmt(q.D*q.SF,1)} m). Narrow the pit or deepen the cut.`]);
+  if (r.SH < 0) out.push(['info', `<b>SH is negative:</b> the spoil peak is ${fmt(-r.SH,1)} m below the bench, so the dragline dumps below its own level.`]);
+  if (q.theta >= q.beta) out.push(['warn', `<b>Spoil angle ≥ highwall angle.</b> Spoil normally stands flatter than the highwall; check the inputs.`]);
+  if (variant==='coal') out.push(['info', `The −T/tanθ term moves the spoil slope so it starts at the top of the coal edge. As in the lecture, the small change in spoil area this causes is ignored.`]);
+  document.getElementById('alerts').innerHTML = out.map(([c,t]) => `<div class="alert ${c}">${t}</div>`).join('');
+}
+
+/* ---------- sensitivity chart ---------- */
+let sensIn = 'theta', sensOut = 'RF';
+function setupSens(){
+  const so = document.getElementById('sensOut'), si = document.getElementById('sensIn');
+  so.innerHTML = OUTS.map(o => `<option value="${o.k}">${o.sym.replace('_','')} · ${o.name}</option>`).join('');
+  si.innerHTML = PARAMS.map(d => `<option value="${d.k}">${d.sym.replace('_','')} · ${d.name}</option>`).join('');
+  so.value = sensOut; si.value = sensIn;
+  so.addEventListener('change', () => { sensOut = so.value; renderSens(); });
+  si.addEventListener('change', () => { sensIn = si.value; renderSens(); });
+}
+function niceTicks(lo, hi, n=5){
+  if (hi - lo < 1e-9){ const m = Math.abs(lo)||1; lo -= m*0.1; hi += m*0.1; }
+  const raw = (hi-lo)/n, mag = 10**Math.floor(Math.log10(raw)), st = [1,2,2.5,5,10].map(v=>v*mag).find(v=>v>=raw);
+  const t0 = Math.floor(lo/st)*st, t1 = Math.ceil(hi/st)*st, ticks = [];
+  for (let v=t0; v<=t1+st*1e-6; v+=st) ticks.push(+v.toFixed(10));
+  return {ticks, lo:t0, hi:t1, st};
+}
+function renderSens(){
+  const d = PM[sensIn], o = OUTS.find(x=>x.k===sensOut);
+  const N = 80, xs = [], ys = [];
+  for (let i=0;i<=N;i++){
+    const x = d.min + (d.max-d.min)*i/N;
+    const q = {...p, [sensIn]: x};
+    xs.push(x); ys.push(compute(q, variant)[sensOut]);
+  }
+  const cur = R[sensOut];
+  const W = 560, Hh = 250, L = 62, Rr = 16, T = 18, B = 42;
+  const yt = niceTicks(Math.min(...ys), Math.max(...ys));
+  const xt = niceTicks(d.min, d.max, 6);
+  const X = x => L + (x-d.min)/(d.max-d.min)*(W-L-Rr);
+  const Y = y => T + (1-(y-yt.lo)/(yt.hi-yt.lo))*(Hh-T-B);
+  const dec = yt.st < 0.1 ? 2 : yt.st < 1 ? 1 : 0;
+  let g = '';
+  for (const v of yt.ticks){ g += `<line x1="${L}" x2="${W-Rr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end" font-size="12" fill="var(--muted)" font-family="var(--mono)">${fmt(v,dec)}</text>`; }
+  const xdec = xt.st < 0.1 ? 2 : xt.st < 1 ? 1 : 0;
+  for (const v of xt.ticks){ if (v < d.min-1e-9 || v > d.max+1e-9) continue; g += `<line x1="${X(v)}" x2="${X(v)}" y1="${Hh-B}" y2="${Hh-B+5}" stroke="var(--muted)"/><text x="${X(v)}" y="${Hh-B+19}" text-anchor="middle" font-size="12" fill="var(--muted)" font-family="var(--mono)">${fmt(v,xdec)}</text>`; }
+  g += `<line x1="${L}" x2="${W-Rr}" y1="${Hh-B}" y2="${Hh-B}" stroke="var(--muted)"/>`;
+  const path = xs.map((x,i)=>`${i?'L':'M'}${X(x).toFixed(1)},${Y(ys[i]).toFixed(1)}`).join(' ');
+  g += `<path d="${path} L${X(d.max)},${Hh-B} L${X(d.min)},${Hh-B} Z" fill="var(--accent)" opacity=".08"/>`;
+  g += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.2"/>`;
+  g += `<line x1="${X(p[sensIn])}" x2="${X(p[sensIn])}" y1="${T}" y2="${Hh-B}" stroke="var(--hl)" stroke-dasharray="4 3"/>`;
+  g += `<circle cx="${X(p[sensIn])}" cy="${Y(cur)}" r="5.5" fill="var(--hl)" stroke="var(--panel)" stroke-width="2"/>`;
+  const lx = X(p[sensIn]) > W*0.7 ? X(p[sensIn]) - 8 : X(p[sensIn]) + 8;
+  g += `<text x="${lx}" y="${Math.max(Y(cur)-10, 14)}" text-anchor="${X(p[sensIn]) > W*0.7 ? 'end':'start'}" font-size="13" font-weight="600" fill="var(--hl)" font-family="var(--mono)">${fmt(cur,o.dec)} ${o.unit}</text>`;
+  g += `<text x="${(L+W-Rr)/2}" y="${Hh-6}" text-anchor="middle" font-size="12.5" fill="var(--ink)">${d.name} (${d.sym.replace('_','')}${d.unit?', '+d.unit:''})</text>`;
+  g += `<text x="14" y="${(T+Hh-B)/2}" text-anchor="middle" font-size="12.5" fill="var(--ink)" transform="rotate(-90 14 ${(T+Hh-B)/2})">${o.sym.replace('_','')} (${o.unit})</text>`;
+  document.getElementById('sens').innerHTML = g;
+  const span = Math.max(...ys) - Math.min(...ys);
+  const note = document.getElementById('sensNote');
+  if (span < 1e-9) note.textContent = `${o.sym.replace('_','')} does not depend on ${d.sym.replace('_','')}: the line is flat.`;
+  else {
+    const i = Math.min(N-1, Math.round((p[sensIn]-d.min)/(d.max-d.min)*N));
+    const slope = (ys[Math.min(i+1,N)] - ys[Math.max(i-1,0)])/(xs[Math.min(i+1,N)] - xs[Math.max(i-1,0)]);
+    note.textContent = `Across the slider range ${o.sym.replace('_','')} varies from ${fmt(Math.min(...ys),o.dec)} to ${fmt(Math.max(...ys),o.dec)} ${o.unit}. At the current value, one ${d.unit||'unit'} more ${d.sym.replace('_','')} changes ${o.sym.replace('_','')} by about ${fmt(slope, Math.abs(slope)<0.1?3:2)} ${o.unit}.`;
+  }
+}
+
+/* ---------- things to try ---------- */
+const TRIES = [
+  {k:'SF', to:1.40, t:'Bulkier spoil', d:'Raise the swell factor to 1.40', msg:'Watch H, SH and RF grow: more swell needs a taller pile, so the boom must reach further.'},
+  {k:'theta', to:32, t:'Flatter spoil pile', d:'Lower θ to 32°', msg:'A flatter pile spreads out: the peak moves away and RF climbs quickly, while H drops a little.'},
+  {k:'W', to:60, t:'Wider pit', d:'Widen the pit to 60 m', msg:'RF grows by W/4 and H by (W/4)·tanθ. The pit advances more slowly (L falls) for the same tonnage.'},
+  {k:'beta', to:55, t:'Flatter highwall', d:'Lower β to 55°', msg:'RF₁ = D/tanβ grows, so the crest and the dragline move back from the coal edge.'},
+  {k:'CT', to:50, t:'Faster cycle', d:'Cut cycle time to 50 s', msg:'More passes per hour mean a smaller bucket for the same annual volume. The drawing does not change.'},
+  {k:'R', to:95, t:'Better recovery', d:'Raise ore recovery to 95%', msg:'Less ore to uncover, so OB_T, BC and MSL all fall.'},
+];
+function setupTries(){
+  const el = document.getElementById('tries');
+  el.innerHTML = TRIES.map((t,i)=>`<div class="try"><b>${t.t}</b><span>${t.d}</span><button class="btn" type="button" data-i="${i}">Show me</button></div>`).join('');
+  el.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const t = TRIES[+b.dataset.i];
+    document.getElementById('tryMsg').textContent = t.msg;
+    animateTo(t.k, t.to);
+  });
+}
+let anim = null;
+function animateTo(k, to){
+  if (anim) cancelAnimationFrame(anim);
+  const from = p[k], d = PM[k], t0 = performance.now();
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dur = reduce ? 0 : 1600;
+  setActive(k);
+  if (document.getElementById('sensFollow').checked){ sensIn = k; document.getElementById('sensIn').value = k; }
+  const tick = now => {
+    const u = dur ? Math.min(1,(now-t0)/dur) : 1;
+    const e = u<.5 ? 2*u*u : 1-((-2*u+2)**2)/2;
+    let v = from + (to-from)*e;
+    v = Math.round(v/d.step)*d.step;
+    setParam(k, +v.toFixed(6), 'anim');
+    if (u < 1) anim = requestAnimationFrame(tick); else { anim = null; setTimeout(()=>setActive(null), 1400); }
+  };
+  anim = requestAnimationFrame(tick);
+}
+
+/* ---------- main update ---------- */
+let R = compute(p, variant);
+function update(){
+  R = compute(p, variant);
+  drawFigure();
+  renderTiles();
+  renderSolution();
+  renderAlerts();
+  renderSens();
+}
+
+document.getElementById('btnEx2').addEventListener('click', () => {
+  for (const d of PARAMS) setParamSilent(d.k, d.ex);
+  variant = 'basic'; syncVariantUI(); update();
+  document.getElementById('tryMsg').textContent = '';
+});
+function setParamSilent(k, v){
+  p[k] = v; document.getElementById('rng-'+k).value = v;
+  document.getElementById('num-'+k).value = fmt(v, PM[k].dec).replace(/,/g,'');
+}
+for (const id of ['tgDims','tgLbl','tgDl','tgPrev']) document.getElementById(id).addEventListener('change', drawFigure);
+document.getElementById('tgCon').addEventListener('change', applyHL);
+
+buildControls();
+setupSens();
+setupTries();
+update();
+window.__dl = {compute, p};
+})();
+</script>
+</body>
+</html>
